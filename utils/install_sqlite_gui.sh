@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # Warning:  Bashism's ahead.
 ########################################
@@ -9,6 +9,30 @@
 RANDOM_SECRET=0
 MAKE_CERT=0
 USE_HTTP=0
+
+#########################################################################
+#########################################################################
+# Return a normalized yes/no for a value
+yes_no() {
+    QUESTION=$1
+    DEFAULT_ANSWER=$2
+
+    while true; do
+        read -p "$QUESTION ($DEFAULT_ANSWER) " yn
+        case $yn in
+            [Yy]* )
+                YES_NO_RESULT=yes
+                break;;
+            [Nn]* )
+                YES_NO_RESULT=no
+                break;;
+            "" )
+                YES_NO_RESULT=$DEFAULT_ANSWER
+                break;;
+            * ) echo "Please answer yes or no.";;
+        esac
+    done
+}
 
 ########################################
 #
@@ -54,6 +78,7 @@ function on_exit {
     rm -f .sqlitegui.prefs
     # Redirect all further output onto the prefs file
     exec > .sqlitegui.prefs
+    echo "# Defaults written by/to be read by install_sqlite_gui.sh"
     echo "OS_TYPE=${OS_TYPE}"
     echo "MAKE_CERT=${MAKE_CERT}"
     echo "BASEDIR=${BASEDIR}"
@@ -145,27 +170,33 @@ function determine_flavor {
 function setup_supervisor {
     echo "Setting up the supervisor config for SQLite GUI"
     if [ $OS_TYPE == 'MacOS' ]; then
-        SUPERVISOR_DIR=/usr/local/etc/supervisor.d/
-        SUPERVISOR_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
+        SUPERVISOR_DIR=/usr/local/etc/supervisor.d
+        SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/Supervisor/openrvdas_sqlite.ini.macos
+        SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
 
     # CentOS/RHEL
     elif [ $OS_TYPE == 'CentOS' ]; then
         SUPERVISOR_DIR=/etc/supervisord.d
-        SUPERVISOR_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
+        SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/Supervisor/openrvdas_sqlite.ini
+        SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
 
     # Ubuntu/Debian
     elif [ $OS_TYPE == 'Ubuntu' ]; then
         SUPERVISOR_DIR=/etc/supervisor/conf.d
-        SUPERVISOR_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.conf
+        SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/Supervisor/openrvdas_sqlite.ini
+        SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.conf
     fi
 
     if [ -n "${SUPERVISOR_DIR}" ] ; then
-        SOURCE=${BASEDIR}/sqlite_gui/Supervisor/openrvdas_sqlite.ini
-        DEST=${SUPERVISOR_FILE}
         if [ -f ${DEST} ] ; then
-            echo "Not overwriting existing supervisor config file"
+            yes_no "Overwrite existing supervisor config file? " "no"
+            OVERWRITE_CONFIG=$YES_NO_RESULT
         else
-            /bin/cp ${SOURCE} ${DEST}
+            OVERWRITE_CONFIG='no'
+        fi
+        if [ $OVERWRITE_CONFIG == 'yes' ]; then
+            echo "Copying supervisor file \"${SUPERVISOR_SOURCE_FILE}\" to \"$SUPERVISOR_TARGET_FILE"
+            sudo /bin/cp ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TARGET_FILE}
         fi
     else
         echo "Unable to set up supervisor for you."
@@ -176,20 +207,17 @@ function normalize_path {
     echo $(cd ${1} ; echo ${PWD})
 }
 
-
+# Figure out which directory is root for OpenRVDAS code
 function get_basedir {
-    this_dir=${0%/*}
-    [[ $this_dir == $0 ]] && this_dir=${PWD}
-    cd $this_dir
-    [[ -f ../sqlite_server_api.py ]] && BASEDIR=`normalize_path "${PWD}/.."`
-    while [ -z "${BASEDIR}" ] ; do
-        echo "Enter the path to the sqlite_gui directory: "
-        read reply
-        if [ -d ${reply} ] ; then
-            BASEDIR=${reply}
-        else
-            echo "Nope:  try again"
-        fi
+    DEFAULT_BASEDIR=$BASEDIR
+    read -p "Path to OpenRVDAS installation? ($DEFAULT_BASEDIR) " BASEDIR
+    BASEDIR=${BASEDIR:-$DEFAULT_BASEDIR}
+
+    while [[ ! -f ${BASEDIR}/sqlite_gui/sqlite_server_api.py ]]; do
+        echo
+        echo "No \"sqlite_gui\" subdir found in OpenRVDAS installation at \"${BASEDIR}\"."
+        echo "Please create a symlink from the sqlite_gui code to this directory, then hit"
+        read -p "\"Return\" to continue. "
     done
 }
 
@@ -259,13 +287,31 @@ function add_python_packages {
     done
 }
 
+echo "############################################"
+# We might have OS_TYPE in prefs
+if [ -n "$OS_TYPE" ]; then
+    echo "OS type set to \"$OS_TYPE\""
+else
+    determine_flavor
+    echo "OS type inferred to be \"$OS_TYPE\""
+fi
+
+# Figure out where our installation is
+echo
+echo "############################################"
 get_basedir
+
+# As it says on the tin, set up the supervisor file
+echo
+echo "############################################"
 setup_supervisor
+
 # FIXME:  Instead, patch so we run logger_manager from our dir ??
 overwrite_logger_manager
-# We might have OS_TYPE in prefs
-[[ -z "${OS_TYPE}" ]] && determine_flavor
+
 # Generate cert/key for nginx if requested
+echo
+echo "############################################"
 [[ ${MAKE_CERT} == 1 ]] && make_certificate
 # Generate a random secret if requested
 [ ${RANDOM_SECRET} == 1 ] && SECRET=`random_secret`
