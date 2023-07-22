@@ -26,6 +26,17 @@ stderr_logfile=/var/log/openrvdas/logger_manager.stderr
 stderr_logfile_maxbytes=10000000 ; 10M
 stderr_logfile_maxbackups=100
 
+[program:cached_data_server_sqlite]
+command=/opt/openrvdas/venv/bin/python server/cached_data_server.py --port 8766 --disk_cache /var/tmp/openrvdas/disk_cache --max_records 8640 -v
+directory=/opt/openrvdas
+autostart=false
+autorestart=true
+startretries=3
+killasgroup=true
+stderr_logfile=/var/log/openrvdas/cached_data_server.stderr
+stderr_logfile_maxbytes=10000000 ; 10M
+stderr_logfile_maxbackups=100
+
 ; The scripts we're going to run
 [program:nginx_sqlite]
 command=/usr/local/homebrew/bin/nginx -g 'daemon off;' -c /opt/openrvdas/sqlite_gui/nginx/nginx_sqlite_macos.conf
@@ -39,5 +50,5 @@ stderr_logfile_maxbytes=10000000 ; 10M
 stderr_logfile_maxbackups=100
 
 [group:sqlite]
-programs=logger_manager_sqlite,fcgiwrap,nginx_sqlite
+programs=logger_manager_sqlite,cached_data_server_sqlite,fcgiwrap,nginx_sqlite
 
