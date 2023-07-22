@@ -234,14 +234,6 @@ function make_certificate {
     cd ${SAVEPWD}
 }
 
-function overwrite_logger_manager {
-    # FIXME"  This needs to be obsoleted.
-    # Save the original logger_manager
-    SERVERDIR=${BASEDIR}/server
-    SQLITESRV=${BASEDIR}/sqlite_gui/server
-    # /bin/cp ${SQLITESRV}/logger_manager.py ${SERVERDIR}/
-}
-
 function random_secret {
     echo "Generating a random secret for CGI's"
     x=""
@@ -306,8 +298,8 @@ echo
 echo "############################################"
 setup_supervisor
 
-# FIXME:  Instead, patch so we run logger_manager from our dir ??
-overwrite_logger_manager
+# No longer needed; now folded into dev and master branches
+# overwrite_logger_manager
 
 # Generate cert/key for nginx if requested
 echo
