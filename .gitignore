@@ -1,9 +1,11 @@
 # Stored prefs file
-.sqlitegui.prefs
-utils/.sqlitegui.prefs
+.install_sqlite_gui_preferences
 
 # Changeable file generated from secret.py.dist
 cgi-bin/secret.py
+cgi-bin/secret.pye
 
 # Database where state is stored
 openrvdas.sql
+
+__pycache__
