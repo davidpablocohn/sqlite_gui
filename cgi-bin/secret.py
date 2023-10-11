@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 ##############################################################################
 ##############################################################################
 # https://xkcd.com/936/
-_SECRET = "correct horse battery staple"
+_SECRET = 7f9167eeb059f926edd30cad77fac7d3
 #    LEN:"12345678901234567890123456789012"
 # Ideally, SHA256 passwords/phrases *should* be at least 32 bytes
 

@@ -15,9 +15,9 @@ stderr_logfile_maxbytes=10000000 ; 10M
 stderr_logfile_maxbackups=100
 
 [program:logger_manager_sqlite]
-command=/opt/openrvdas/venv/bin/python server/logger_manager.py --database sqlite --data_server_websocket :8766 -v -V --no-console
-environment=PATH="/opt/openrvdas/venv/bin:/usr/bin:/usr/local/bin"
-directory=/opt/openrvdas
+command=BASEDIR/venv/bin/python server/logger_manager.py --database sqlite --data_server_websocket :8766 -v -V --no-console
+environment=PATH="BASEDIR/venv/bin:/usr/bin:/usr/local/bin"
+directory=BASEDIR
 autostart=false
 autorestart=false
 startretries=3
@@ -27,8 +27,8 @@ stderr_logfile_maxbytes=10000000 ; 10M
 stderr_logfile_maxbackups=100
 
 [program:cached_data_server_sqlite]
-command=/opt/openrvdas/venv/bin/python server/cached_data_server.py --port 8766 --disk_cache /var/tmp/openrvdas/disk_cache --max_records 8640 -v
-directory=/opt/openrvdas
+command=BASEDIR/venv/bin/python server/cached_data_server.py --port 8766 --disk_cache /var/tmp/openrvdas/disk_cache --max_records 8640 -v
+directory=BASEDIR
 autostart=false
 autorestart=true
 startretries=3
@@ -39,8 +39,8 @@ stderr_logfile_maxbackups=100
 
 ; The scripts we're going to run
 [program:nginx_sqlite]
-command=/usr/local/homebrew/bin/nginx -g 'daemon off;' -c /opt/openrvdas/sqlite_gui/nginx/nginx_sqlite_macos.conf
-directory=/opt/openrvdas
+command=/usr/local/homebrew/bin/nginx -g 'daemon off;' -c BASEDIR/sqlite_gui/nginx/nginx_sqlite_macos.conf
+directory=BASEDIR
 autostart=false
 autorestart=true
 startretries=3

@@ -1,14 +1,35 @@
 #!/bin/bash -e
 
+# OpenRVDAS is available as open source under the MIT License at
+#   https:/github.com/oceandatatools/openrvdas
+#
+# A separate SQLite-based GUI for OpenRVDAS, developed by Kevin Pedigo,
+# is available at
+#   https://github.com/FrozenGeek/sqlite_gui
+#
+# This script is a part of the SQLite-based GUI. It installs the additional
+# packages needed for the GUI to run, and reconfigures OpenRVDAS to use it
+# by default.
+
 # Warning:  Bashism's ahead.
 ########################################
 #
 # Initial default values
 #
 ########################################
-RANDOM_SECRET=0
-MAKE_CERT=0
-USE_HTTP=0
+PREFERENCES_FILE='.install_sqlite_gui_preferences'
+
+###########################################################################
+###########################################################################
+function exit_gracefully {
+    echo Exiting.
+
+    # Try deactivating virtual environment, if it's active
+    if [ -n "$INSTALL_ROOT" ];then
+        deactivate
+    fi
+    return -1 2> /dev/null || exit -1  # exit correctly if sourced/bashed
+}
 
 #########################################################################
 #########################################################################
@@ -34,12 +55,45 @@ yes_no() {
     done
 }
 
-########################################
-#
-# If a preferences file exists, use it
-#
-########################################
-[ -e .sqlitegui.prefs ] && source .sqlitegui.prefs
+
+###########################################################################
+###########################################################################
+# Read any pre-saved default variables from file
+function set_default_variables {
+    # Defaults that will be overwritten by the preferences file, if it
+    # exists.
+    BASEDIR='/opt/openrvdas'
+    RANDOM_SECRET=yes
+    MAKE_CERT=no
+    USE_HTTP=no
+
+    # Read in the preferences file, if it exists, to overwrite the defaults.
+    if [ -e $PREFERENCES_FILE ]; then
+        echo "#####################################################################"
+        echo Reading pre-saved defaults from "$PREFERENCES_FILE"
+        source $PREFERENCES_FILE
+    fi
+}
+
+###########################################################################
+###########################################################################
+# Save defaults in a preferences file for the next time we run.
+function save_default_variables {
+    cat > $PREFERENCES_FILE <<EOF
+# Defaults written by/to be read by install_sqlite_gui.sh
+OS_TYPE=${OS_TYPE}
+BASEDIR=${BASEDIR}
+MAKE_CERT=${MAKE_CERT}
+USE_HTTP=${USE_HTTP}
+
+# For security purposes, do not save SECRET in prefs file ??
+# [[ -n "${SECRET}" ]] && echo "SECRET=\"${SECRET}\""
+RANDOM_SECRET=${RANDOM_SECRET}
+EOF
+}
+
+# On exit, save default variables
+trap save_default_variables EXIT
 
 ########################################
 #
@@ -72,72 +126,8 @@ function show_help {
     echo "On exiting the script, preferences will be written out"
 }
 
-# On exit, create prefs file
-function on_exit {
-    echo "Writing preferences file"
-    rm -f .sqlitegui.prefs
-    # Redirect all further output onto the prefs file
-    exec > .sqlitegui.prefs
-    echo "# Defaults written by/to be read by install_sqlite_gui.sh"
-    echo "OS_TYPE=${OS_TYPE}"
-    echo "MAKE_CERT=${MAKE_CERT}"
-    echo "BASEDIR=${BASEDIR}"
-    echo "USE_HTTP=${USE_HTTP}"
-    echo "RANDOM_SECRET=${RANDOM_SECRET}"
-    # For security purposes, do not save SECRET in prefs file ??
-    # [[ -n "${SECRET}" ]] && echo "SECRET=\"${SECRET}\""
-}
-trap on_exit EXIT
-
-while [ $# -gt 0 ] ; do
-    case "$1" in
-         -f)
-             if [ -f $2 ] ; then
-                 source $2
-             else
-                 echo "Config file not found: $2"
-             fi
-             shift
-             ;;
-         -makecert)
-             MAKE_CERT=1
-             ;;
-         -nomakecert)
-             MAKE_CERT=0
-             ;;
-         -OS_TYPE)
-             OS_TYPE=$2
-             shift
-             ;;
-         -basedir)
-             if [ -d $2 ] ; then
-                 BASEDIR=$2
-             else
-                 echo "basedir not a directory: $2"
-             fi
-             shift
-             ;;
-         -randomsecret)
-             RANDOM_SECRET=1
-             ;;
-         -secret)
-             SECRET=$2
-             shift
-             ;;
-         -http)
-             USE_HTTP=1
-             ;;
-         -h)
-             show_help
-             exit
-             ;;
-         *)
-             echo "Ignoring unknown option: $1"
-             ;;
-    esac
-    shift
-done
-
+###########################################################################
+###########################################################################
 function ask_os_type {
     declare -A allowed
     allowed[CentOS]=CentOS
@@ -151,11 +141,13 @@ function ask_os_type {
     done
 }
 
+###########################################################################
+###########################################################################
 function determine_flavor {
     # We don't need to check versions because they're already
     # running OpenRVDAS.  Simplified.  Just get the flavor.
     if [ `uname -s` == 'Darwin' ] ; then
-        OS_TYPE=MacOS
+        OS_TYPE='MacOS'
         return
     fi
     LIKE=`grep -i "id_like" /etc/os-release`
@@ -164,8 +156,13 @@ function determine_flavor {
     # This will work on debian, ubuntu, RaspiOS, etc...
     [[ ${LIKE} =~ 'debian' ]] && OS_TYPE='Ubuntu'
     # SUSE/OpenSUSE say "suse" in the id_like
+
+    echo "#####################################################################"
+    echo "Detected OS = $OS_TYPE"
 }
 
+###########################################################################
+###########################################################################
 ### Supervisor
 function setup_supervisor {
     echo "Setting up the supervisor config for SQLite GUI"
@@ -195,25 +192,34 @@ function setup_supervisor {
             OVERWRITE_CONFIG='no'
         fi
         if [ $OVERWRITE_CONFIG == 'yes' ]; then
-            echo "Copying supervisor file \"${SUPERVISOR_SOURCE_FILE}\" to \"$SUPERVISOR_TARGET_FILE"
-            sudo /bin/cp ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TARGET_FILE}
+            #echo "Copying supervisor file \"${SUPERVISOR_SOURCE_FILE}\" to \"$SUPERVISOR_TARGET_FILE"
+
+            # First replace the generic 'BASEDIR' variable in the file with actual
+            sed "s#BASEDIR#${BASEDIR}#g" ${SUPERVISOR_SOURCE_FILE} > /tmp/openrvdas_sqlite.ini.tmp
+            # Then copy into place
+            sudo /bin/mv /tmp/openrvdas_sqlite.ini.tmp ${SUPERVISOR_TARGET_FILE}
         fi
     else
         echo "Unable to set up supervisor for you."
     fi
 }
 
+###########################################################################
+###########################################################################
 function normalize_path {
     echo $(cd ${1} ; echo ${PWD})
 }
 
+###########################################################################
+###########################################################################
 # Figure out which directory is root for OpenRVDAS code
 function get_basedir {
     DEFAULT_BASEDIR=$BASEDIR
     read -p "Path to OpenRVDAS installation? ($DEFAULT_BASEDIR) " BASEDIR
     BASEDIR=${BASEDIR:-$DEFAULT_BASEDIR}
 
-    while [[ ! -f ${BASEDIR}/sqlite_gui/sqlite_server_api.py ]]; do
+    # Check that we're linked in. Arbitrarily, do it by looking for this file.
+    while [[ ! -f ${BASEDIR}/sqlite_gui/utils/install_sqlite_gui.sh ]]; do
         echo
         echo "No \"sqlite_gui\" subdir found in OpenRVDAS installation at \"${BASEDIR}\"."
         echo "Please create a symlink from the sqlite_gui code to this directory, then hit"
@@ -221,6 +227,8 @@ function get_basedir {
     done
 }
 
+###########################################################################
+###########################################################################
 function make_certificate {
     SAVEPWD=${PWD}
     cd ../nginx
@@ -229,55 +237,140 @@ function make_certificate {
         echo "If you want to over-write them, cd to ../nginx"
         echo "and run GenerateCert.sh"
     else
-        /bin/bash GenerateCert.sh
+        /bin/bash ${BASEDIR}/sqlite_gui/nginx/GenerateCert.sh
     fi
     cd ${SAVEPWD}
 }
 
+###########################################################################
+###########################################################################
 function random_secret {
-    echo "Generating a random secret for CGI's"
     x=""
     count=`echo ${RANDOM} | cut -b1-2`
     for i in `seq 1 ${count}` ; do 
         x=${RANDOM}${x}${RANDOM}
     done
-    SECRET=`echo ${x} | md5sum - | cut -b1-32`
+    if [ ${OS_TYPE} == 'MacOS' ] ; then
+        SECRET=`echo ${x} | md5 | cut -b1-32`
+    else
+        SECRET=`echo ${x} | md5sum - | cut -b1-32`
+    fi
     echo ${SECRET}
 }
 
+###########################################################################
+###########################################################################
 function set_secret {
     # sed the secret into secret.py
     echo "Setting the secret used for CGI's"
     SAVEPWD=${PWD}
-    CGIDIR=../cgi-bin
-    cd ${CGIDIR}
-    /usr/bin/sed -ie "s/_SECRET = \".*\"/_SECRET = \"${SECRET}\""/ secret.py
-    /bin/rm =f secret.pye
+    CGIDIR=$BASEDIR/sqlite_gui/cgi-bin
+    if [ $OS_TYPE == 'MacOS' ]; then
+        /usr/bin/sed -Ie "s/_SECRET = .*/_SECRET = ${SECRET}/" $CGIDIR/secret.py
+        echo success
+    else
+        /usr/bin/sed -ie "s/_SECRET = .*/_SECRET = ${SECRET}/" $CGIDIR/secret.py
+    fi
+    /bin/rm -f secret.pye
     unset SECRET
     cd ${SAVEPWD}
 }
 
+###########################################################################
+###########################################################################
 function downgrade_nginx {
     echo "Setting nginx to use (non-secure) port 80"
     SAVEPWD=${SAVEPWD}
     NGINXDIR=${BASEDIR}/sqlite_gui/nginx
-    SED="/usr/bin/sed -ie"
     cd ${NGINXDIR}
     # sure, http2 is cool, but sed the sadness.
-    ${SED} 's/listen.*9000.*/listen \*:9000;/' nginx_sqlite.conf
-    ${SED} 's/listen.*443.*/listen \*:80;/' nginx_sqlite.conf
+    if [ $OS_TYPE == 'MacOS' ]; then
+        /usr/bin/sed -Ie "s/listen.*9000.*/listen \*:9000;/" nginx_sqlite.conf
+        /usr/bin/sed -Ie "s/listen.*443.*/listen \*:80;/" nginx_sqlite.conf
+    else
+        /usr/bin/sed -ie "s/listen.*9000.*/listen \*:9000;/" nginx_sqlite.conf
+        /usr/bin/sed -ie "s/listen.*443.*/listen \*:80;/" nginx_sqlite.conf
+    fi
+
     rm -f nginx_sqlite.confe
     :
     cd ${SAVEPWD}
 }
 
+###########################################################################
+###########################################################################
 function add_python_packages {
-    packages="PyJWT yamllint  py-setproctitle"
+    packages="PyJWT yamllint"  #  py-setproctitle"
     echo "Installing python libraries: ${packages}"
     for pkg in $packages ; do
         pip -q install $pkg
     done
 }
+
+###########################################################################
+###########################################################################
+###########################################################################
+###########################################################################
+# Start of actual script
+###########################################################################
+###########################################################################
+echo
+echo "SQLite-GUI configuration script for OpenRVDAS"
+
+###########################################################################
+# Load default variables from preferences file, if it exists
+set_default_variables
+
+###########################################################################
+# Parse command line arguments
+while [ $# -gt 0 ] ; do
+    case "$1" in
+         -f)
+             if [ -f $2 ] ; then
+                 source $2
+             else
+                 echo "Config file not found: $2"
+             fi
+             shift
+             ;;
+         -makecert)
+             MAKE_CERT=yes
+             ;;
+         -nomakecert)
+             MAKE_CERT=no
+             ;;
+         -OS_TYPE)
+             OS_TYPE=$2
+             shift
+             ;;
+         -basedir)
+             if [ -d $2 ] ; then
+                 BASEDIR=$2
+             else
+                 echo "basedir not a directory: $2"
+             fi
+             shift
+             ;;
+         -randomsecret)
+             RANDOM_SECRET=yes
+             ;;
+         -secret)
+             SECRET=$2
+             shift
+             ;;
+         -http)
+             USE_HTTP=yes
+             ;;
+         -h)
+             show_help
+             exit
+             ;;
+         *)
+             echo "Ignoring unknown option: $1"
+             ;;
+    esac
+    shift
+done
 
 echo "############################################"
 # We might have OS_TYPE in prefs
@@ -298,18 +391,23 @@ echo
 echo "############################################"
 setup_supervisor
 
-# No longer needed; now folded into dev and master branches
-# overwrite_logger_manager
-
 # Generate cert/key for nginx if requested
 echo
 echo "############################################"
-[[ ${MAKE_CERT} == 1 ]] && make_certificate
+[[ ${MAKE_CERT} == 'yes' ]] && make_certificate
 # Generate a random secret if requested
-[ ${RANDOM_SECRET} == 1 ] && SECRET=`random_secret`
+[ ${RANDOM_SECRET} == 'yes' ] && SECRET=`random_secret`
 # If we have a secret (supplied or random), set it
 [ -n "${SECRET}" ] && set_secret
+
+echo
+echo "############################################"
 # Add python packages 
 add_python_packages
+
+echo
+echo "############################################"
 # ... well... you never know... use http
-[[ ${USE_HTTP} == 1 ]] && downgrade_nginx
+[[ ${USE_HTTP} == 'yes' ]] && downgrade_nginx
+
+echo "Success! Happy logging..."
