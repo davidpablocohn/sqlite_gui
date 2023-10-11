@@ -63,6 +63,7 @@ function set_default_variables {
     # Defaults that will be overwritten by the preferences file, if it
     # exists.
     BASEDIR='/opt/openrvdas'
+    RVDAS_USER='rvdas'
     RANDOM_SECRET=yes
     MAKE_CERT=no
     USE_HTTP=no
@@ -83,6 +84,7 @@ function save_default_variables {
 # Defaults written by/to be read by install_sqlite_gui.sh
 OS_TYPE=${OS_TYPE}
 BASEDIR=${BASEDIR}
+RVDAS_USER=${RVDAS_USER}
 MAKE_CERT=${MAKE_CERT}
 USE_HTTP=${USE_HTTP}
 
@@ -121,6 +123,7 @@ function show_help {
     echo "             Darwin - use for apple products"
     echo " -secret <\"quoted text\">   Secret for CGI's to use for auth"
     echo " -randomsecret  Generate a random secret"
+    echo " -user <OpenRVDAS user name>"
     echo " -http       Use (non-secure) http instead of https"
     echo
     echo "On exiting the script, preferences will be written out"
@@ -171,17 +174,40 @@ function setup_supervisor {
         SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/Supervisor/openrvdas_sqlite.ini.macos
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
 
+        FCGI_PATH=/usr/local/homebrew/bin
+        FCGI_SOCKET=/var/run/fcgiwrap.sock
+        NGINX_PATH=/usr/local/homebrew/bin
+        NGINX_FILES=/usr/local/etc/nginx
+
     # CentOS/RHEL
     elif [ $OS_TYPE == 'CentOS' ]; then
+
+        sudo ln -s /etc/nginx /usr/local/etc/nginx
+
         SUPERVISOR_DIR=/etc/supervisord.d
         SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/Supervisor/openrvdas_sqlite.ini
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
 
+        FCGI_PATH=/usr/bin
+        FCGI_SOCKET=/var/run/supervisor/fcgiwrap.sock
+        NGINX_PATH=/usr/sbin
+        NGINX_FILES=/etc/nginx
+
     # Ubuntu/Debian
     elif [ $OS_TYPE == 'Ubuntu' ]; then
+
+        # Hack so that NGinx can look for files in same place whether we're on
+        # MacOS (/usr/local/etc/nginx) or Linux (/etc/nginx)
+        sudo ln -s /etc/nginx /usr/local/etc/nginx
+
         SUPERVISOR_DIR=/etc/supervisor/conf.d
         SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/Supervisor/openrvdas_sqlite.ini
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.conf
+
+        FCGI_PATH=/usr/bin
+        FCGI_SOCKET=/var/run/supervisor/fcgiwrap.sock
+        NGINX_PATH=/usr/sbin
+        NGINX_FILES=/etc/nginx
     fi
 
     if [ -n "${SUPERVISOR_DIR}" ] ; then
@@ -193,11 +219,19 @@ function setup_supervisor {
         fi
         if [ $OVERWRITE_CONFIG == 'yes' ]; then
             #echo "Copying supervisor file \"${SUPERVISOR_SOURCE_FILE}\" to \"$SUPERVISOR_TARGET_FILE"
+            SUPERVISOR_TEMP_FILE='/tmp/openrvdas_sqlite.ini.tmp'
+            cp ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
 
             # First replace the generic 'BASEDIR' variable in the file with actual
-            sed "s#BASEDIR#${BASEDIR}#g" ${SUPERVISOR_SOURCE_FILE} > /tmp/openrvdas_sqlite.ini.tmp
+            $SED_IE "s#BASEDIR#${BASEDIR}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#RVDAS_USER#${RVDAS_USER}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#FCGI_PATH#${FCGI_PATH}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#FCGI_SOCKET#${FCGI_PATH}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
+
+            # Now replace architecture-dependent fields
+
             # Then copy into place
-            sudo /bin/mv /tmp/openrvdas_sqlite.ini.tmp ${SUPERVISOR_TARGET_FILE}
+            sudo /bin/mv ${SUPERVISOR_TEMP_FILE} ${SUPERVISOR_TARGET_FILE}
         fi
     else
         echo "Unable to set up supervisor for you."
@@ -262,39 +296,28 @@ function random_secret {
 ###########################################################################
 function set_secret {
     # sed the secret into secret.py
-    echo "Setting the secret used for CGI's"
-    SAVEPWD=${PWD}
+    echo "Setting the secret used for CGIs"
     CGIDIR=$BASEDIR/sqlite_gui/cgi-bin
-    if [ $OS_TYPE == 'MacOS' ]; then
-        /usr/bin/sed -Ie "s/_SECRET = .*/_SECRET = ${SECRET}/" $CGIDIR/secret.py
-        echo success
-    else
-        /usr/bin/sed -ie "s/_SECRET = .*/_SECRET = ${SECRET}/" $CGIDIR/secret.py
-    fi
-    /bin/rm -f secret.pye
+    /usr/bin/sed -e "s/_SECRET = .*/_SECRET = ${SECRET}/" $CGIDIR/secret.py.dist > $CGIDIR/secret.py
     unset SECRET
-    cd ${SAVEPWD}
 }
 
 ###########################################################################
 ###########################################################################
 function downgrade_nginx {
     echo "Setting nginx to use (non-secure) port 80"
-    SAVEPWD=${SAVEPWD}
     NGINXDIR=${BASEDIR}/sqlite_gui/nginx
-    cd ${NGINXDIR}
     # sure, http2 is cool, but sed the sadness.
-    if [ $OS_TYPE == 'MacOS' ]; then
-        /usr/bin/sed -Ie "s/listen.*9000.*/listen \*:9000;/" nginx_sqlite.conf
-        /usr/bin/sed -Ie "s/listen.*443.*/listen \*:80;/" nginx_sqlite.conf
-    else
-        /usr/bin/sed -ie "s/listen.*9000.*/listen \*:9000;/" nginx_sqlite.conf
-        /usr/bin/sed -ie "s/listen.*443.*/listen \*:80;/" nginx_sqlite.conf
-    fi
+    $SED_IE "s/listen.*9000.*/listen \*:9000;/" ${NGINXDIR}/nginx_sqlite.conf
+    $SED_IE "s/listen.*443.*/listen \*:80;/" ${NGINXDIR}/nginx_sqlite.conf
 
-    rm -f nginx_sqlite.confe
-    :
-    cd ${SAVEPWD}
+    # Fill in wildcards for differences between architectures
+    $SED_IE "s#BASEDIR#${BASEDIR}#g" ${NGINXDIR}/nginx_sqlite.conf
+    $SED_IE "s#NGINX_PATH#${NGINX_PATH}#g" ${NGINXDIR}/nginx_sqlite.conf
+    $SED_IE "s#NGINX_FILES#${NGINX_FILES}#g" ${NGINXDIR}/nginx_sqlite.conf
+    $SED_IE "s#FCGI_SOCKET#${FCGI_SOCKET}#g" ${NGINXDIR}/nginx_sqlite.conf
+
+
 }
 
 ###########################################################################
@@ -358,6 +381,10 @@ while [ $# -gt 0 ] ; do
              SECRET=$2
              shift
              ;;
+         -user)
+             RVDAS_USER=$2
+             shift
+             ;;
          -http)
              USE_HTTP=yes
              ;;
@@ -381,10 +408,21 @@ else
     echo "OS type inferred to be \"$OS_TYPE\""
 fi
 
+# MacOS sed uses different parameters. Sigh.
+if [ $OS_TYPE == 'MacOS' ]; then
+    SED_IE='/usr/bin/sed -Ie'
+else
+    SED_IE='/usr/bin/sed -ie'
+fi
+
 # Figure out where our installation is
 echo
 echo "############################################"
 get_basedir
+
+DEFAULT_RVDAS_USER=$RVDAS_USER
+read -p "User to set GUI up as? ($DEFAULT_RVDAS_USER) " RVDAS_USER
+RVDAS_USER=${RVDAS_USER:-$DEFAULT_RVDAS_USER}
 
 # As it says on the tin, set up the supervisor file
 echo
