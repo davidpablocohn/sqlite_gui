@@ -8,4 +8,7 @@ cgi-bin/secret.pye
 # Database where state is stored
 openrvdas.sql
 
+# Pycharm directory
+.idea
+
 __pycache__

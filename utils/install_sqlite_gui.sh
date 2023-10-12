@@ -182,7 +182,7 @@ function setup_supervisor {
     # CentOS/RHEL
     elif [ $OS_TYPE == 'CentOS' ]; then
 
-        sudo ln -s /etc/nginx /usr/local/etc/nginx
+        sudo ln -s -f /etc/nginx /usr/local/etc/nginx
 
         SUPERVISOR_DIR=/etc/supervisord.d
         SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/Supervisor/openrvdas_sqlite.ini
@@ -226,7 +226,8 @@ function setup_supervisor {
             $SED_IE "s#BASEDIR#${BASEDIR}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#RVDAS_USER#${RVDAS_USER}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#FCGI_PATH#${FCGI_PATH}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
-            $SED_IE "s#FCGI_SOCKET#${FCGI_PATH}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#FCGI_SOCKET#${FCGI_SOCKET}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#NGINX_PATH#${NGINX_PATH}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
 
             # Now replace architecture-dependent fields
 
@@ -419,6 +420,9 @@ fi
 echo
 echo "############################################"
 get_basedir
+
+# Set ourselves up in the same virtual environment
+source ${BASEDIR}/venv/bin/activate
 
 DEFAULT_RVDAS_USER=$RVDAS_USER
 read -p "User to set GUI up as? ($DEFAULT_RVDAS_USER) " RVDAS_USER
