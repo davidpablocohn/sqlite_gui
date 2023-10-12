@@ -198,7 +198,7 @@ function setup_supervisor {
 
         # Hack so that NGinx can look for files in same place whether we're on
         # MacOS (/usr/local/etc/nginx) or Linux (/etc/nginx)
-        sudo ln -s /etc/nginx /usr/local/etc/nginx
+        sudo ln -s -f /etc/nginx /usr/local/etc/nginx
 
         SUPERVISOR_DIR=/etc/supervisor/conf.d
         SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/Supervisor/openrvdas_sqlite.ini
