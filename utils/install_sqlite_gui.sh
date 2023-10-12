@@ -315,6 +315,7 @@ function add_python_packages {
 ###########################################################################
 function setup_nginx {
     NGINXDIR=${BASEDIR}/sqlite_gui/nginx
+    echo "Copying ${NGINXDIR}/nginx_sqlite.conf.dist -> ${NGINXDIR}/nginx_sqlite.conf"
     cp ${NGINXDIR}/nginx_sqlite.conf.dist ${NGINXDIR}/nginx_sqlite.conf
 
     # ... well... you never know... use http
