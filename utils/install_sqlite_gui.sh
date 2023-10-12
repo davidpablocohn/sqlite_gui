@@ -222,14 +222,12 @@ function setup_supervisor {
             SUPERVISOR_TEMP_FILE='/tmp/openrvdas_sqlite.ini.tmp'
             cp ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
 
-            # First replace the generic 'BASEDIR' variable in the file with actual
+            # First replace variables in the file with actual installation-specific values
             $SED_IE "s#BASEDIR#${BASEDIR}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#RVDAS_USER#${RVDAS_USER}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#FCGI_PATH#${FCGI_PATH}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#FCGI_SOCKET#${FCGI_SOCKET}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#NGINX_PATH#${NGINX_PATH}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
-
-            # Now replace architecture-dependent fields
 
             # Then copy into place
             sudo /bin/mv ${SUPERVISOR_TEMP_FILE} ${SUPERVISOR_TARGET_FILE}
