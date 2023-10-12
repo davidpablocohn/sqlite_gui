@@ -223,11 +223,11 @@ function setup_supervisor {
             cp ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
 
             # First replace variables in the file with actual installation-specific values
-            $SED_IE "s#BASEDIR#${BASEDIR}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
-            $SED_IE "s#RVDAS_USER#${RVDAS_USER}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
-            $SED_IE "s#FCGI_PATH#${FCGI_PATH}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
-            $SED_IE "s#FCGI_SOCKET#${FCGI_SOCKET}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
-            $SED_IE "s#NGINX_PATH#${NGINX_PATH}#g" ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#BASEDIR#${BASEDIR}#g" ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#RVDAS_USER#${RVDAS_USER}#g" ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#FCGI_PATH#${FCGI_PATH}#g" ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#FCGI_SOCKET#${FCGI_SOCKET}#g" ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#NGINX_PATH#${NGINX_PATH}#g" ${SUPERVISOR_TEMP_FILE}
 
             # Then copy into place
             sudo /bin/mv ${SUPERVISOR_TEMP_FILE} ${SUPERVISOR_TARGET_FILE}
@@ -303,30 +303,34 @@ function set_secret {
 
 ###########################################################################
 ###########################################################################
-function downgrade_nginx {
-    echo "Setting nginx to use (non-secure) port 80"
-    NGINXDIR=${BASEDIR}/sqlite_gui/nginx
-    # sure, http2 is cool, but sed the sadness.
-    $SED_IE "s/listen.*9000.*/listen \*:9000;/" ${NGINXDIR}/nginx_sqlite.conf
-    $SED_IE "s/listen.*443.*/listen \*:80;/" ${NGINXDIR}/nginx_sqlite.conf
-
-    # Fill in wildcards for differences between architectures
-    $SED_IE "s#BASEDIR#${BASEDIR}#g" ${NGINXDIR}/nginx_sqlite.conf
-    $SED_IE "s#NGINX_PATH#${NGINX_PATH}#g" ${NGINXDIR}/nginx_sqlite.conf
-    $SED_IE "s#NGINX_FILES#${NGINX_FILES}#g" ${NGINXDIR}/nginx_sqlite.conf
-    $SED_IE "s#FCGI_SOCKET#${FCGI_SOCKET}#g" ${NGINXDIR}/nginx_sqlite.conf
-
-
-}
-
-###########################################################################
-###########################################################################
 function add_python_packages {
     packages="PyJWT yamllint"  #  py-setproctitle"
     echo "Installing python libraries: ${packages}"
     for pkg in $packages ; do
         pip -q install $pkg
     done
+}
+
+###########################################################################
+###########################################################################
+function setup_nginx {
+    NGINXDIR=${BASEDIR}/sqlite_gui/nginx
+    cp ${NGINXDIR}/nginx_sqlite.conf.dist ${NGINXDIR}/nginx_sqlite.conf
+
+    # ... well... you never know... use http
+    if [[ ${USE_HTTP} == 'yes' ]]; then
+        echo "Setting nginx to use (non-secure) port 80"
+        # sure, http2 is cool, but sed the sadness.
+
+        $SED_IE "s/listen.*9000.*/listen \*:9000;/" ${NGINXDIR}/nginx_sqlite.conf
+        $SED_IE "s/listen.*443.*/listen \*:80;/" ${NGINXDIR}/nginx_sqlite.conf
+
+        # Fill in wildcards for differences between architectures
+        $SED_IE "s#BASEDIR#${BASEDIR}#g" ${NGINXDIR}/nginx_sqlite.conf
+        $SED_IE "s#NGINX_PATH#${NGINX_PATH}#g" ${NGINXDIR}/nginx_sqlite.conf
+        $SED_IE "s#NGINX_FILES#${NGINX_FILES}#g" ${NGINXDIR}/nginx_sqlite.conf
+        $SED_IE "s#FCGI_SOCKET#${FCGI_SOCKET}#g" ${NGINXDIR}/nginx_sqlite.conf
+    fi
 }
 
 ###########################################################################
@@ -447,7 +451,8 @@ add_python_packages
 
 echo
 echo "############################################"
-# ... well... you never know... use http
-[[ ${USE_HTTP} == 'yes' ]] && downgrade_nginx
+# Copy our NGinx config file into place and, if requested,
+# modify it to use vanilla HTTP
+setup_nginx
 
 echo "Success! Happy logging..."

@@ -8,6 +8,9 @@ cgi-bin/secret.pye
 # Database where state is stored
 openrvdas.sql
 
+# Installation-modified version of nginx/nginx_sqlite.conf.dist
+nginx/nginx_sqlite.conf
+
 # Pycharm directory
 .idea
 
