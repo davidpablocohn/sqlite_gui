@@ -303,6 +303,21 @@ function set_secret {
 
 ###########################################################################
 ###########################################################################
+function add_system_packages {
+    echo "Installing any needed system packages"
+    if [ $OS_TYPE == 'MacOS' ]; then
+
+    # CentOS/RHEL
+    elif [ $OS_TYPE == 'CentOS' ]; then
+
+    # Ubuntu/Debian
+    elif [ $OS_TYPE == 'Ubuntu' ]; then
+        sudo apt-get install -y spawn-fcgi fcgiwrap
+    fi
+}
+
+###########################################################################
+###########################################################################
 function add_python_packages {
     packages="PyJWT yamllint"  #  py-setproctitle"
     echo "Installing python libraries: ${packages}"
@@ -446,7 +461,8 @@ echo "############################################"
 
 echo
 echo "############################################"
-# Add python packages 
+# Add needed system and python packages
+add_system_packages
 add_python_packages
 
 echo
