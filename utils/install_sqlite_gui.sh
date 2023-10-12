@@ -205,7 +205,7 @@ function setup_supervisor {
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.conf
 
         FCGI_PATH=/usr/bin
-        FCGI_SOCKET=/var/run/supervisor/fcgiwrap.sock
+        FCGI_SOCKET=/var/run/fcgiwrap.sock
         NGINX_PATH=/usr/sbin
         NGINX_FILES=/etc/nginx
     fi
