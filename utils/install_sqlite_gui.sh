@@ -174,7 +174,7 @@ function setup_supervisor {
         SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/Supervisor/openrvdas_sqlite.ini.macos
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
 
-        FCGI_PATH=/usr/local/homebrew/bin
+        FCGI_PATH=/usr/local/homebrew
         FCGI_SOCKET=/var/run/fcgiwrap.sock
         NGINX_PATH=/usr/local/homebrew/bin
         NGINX_FILES=/usr/local/etc/nginx
@@ -188,7 +188,7 @@ function setup_supervisor {
         SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/Supervisor/openrvdas_sqlite.ini
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
 
-        FCGI_PATH=/usr/bin
+        FCGI_PATH=/usr
         FCGI_SOCKET=/var/run/supervisor/fcgiwrap.sock
         NGINX_PATH=/usr/sbin
         NGINX_FILES=/etc/nginx
@@ -204,7 +204,7 @@ function setup_supervisor {
         SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/Supervisor/openrvdas_sqlite.ini
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.conf
 
-        FCGI_PATH=/usr/bin
+        FCGI_PATH=/usr
         FCGI_SOCKET=/var/run/fcgiwrap.sock
         NGINX_PATH=/usr/sbin
         NGINX_FILES=/etc/nginx
