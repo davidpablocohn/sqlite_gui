@@ -306,9 +306,12 @@ function set_secret {
 function add_system_packages {
     if [ $OS_TYPE == 'MacOS' ]; then
         echo "Installing MacOS packages"
+        brew install spawn-fcgi fcgiwrap
+        brew link spawn-fcgi fcgiwrap
     # CentOS/RHEL
     elif [ $OS_TYPE == 'CentOS' ]; then
         echo "Installing CentOS packages"
+        yum install -y spawn-fcgi fcgiwrap
     # Ubuntu/Debian
     elif [ $OS_TYPE == 'Ubuntu' ]; then
         echo "Installing Ubuntu packages"
