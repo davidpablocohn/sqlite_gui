@@ -315,8 +315,13 @@ function add_python_packages {
 ###########################################################################
 function setup_nginx {
     NGINXDIR=${BASEDIR}/sqlite_gui/nginx
-    echo "Copying ${NGINXDIR}/nginx_sqlite.conf.dist -> ${NGINXDIR}/nginx_sqlite.conf"
     cp ${NGINXDIR}/nginx_sqlite.conf.dist ${NGINXDIR}/nginx_sqlite.conf
+
+    # Fill in wildcards for differences between architectures
+    $SED_IE "s#BASEDIR#${BASEDIR}#g" ${NGINXDIR}/nginx_sqlite.conf
+    $SED_IE "s#NGINX_PATH#${NGINX_PATH}#g" ${NGINXDIR}/nginx_sqlite.conf
+    $SED_IE "s#NGINX_FILES#${NGINX_FILES}#g" ${NGINXDIR}/nginx_sqlite.conf
+    $SED_IE "s#FCGI_SOCKET#${FCGI_SOCKET}#g" ${NGINXDIR}/nginx_sqlite.conf
 
     # ... well... you never know... use http
     if [[ ${USE_HTTP} == 'yes' ]]; then
@@ -325,12 +330,6 @@ function setup_nginx {
 
         $SED_IE "s/listen.*9000.*/listen \*:9000;/" ${NGINXDIR}/nginx_sqlite.conf
         $SED_IE "s/listen.*443.*/listen \*:80;/" ${NGINXDIR}/nginx_sqlite.conf
-
-        # Fill in wildcards for differences between architectures
-        $SED_IE "s#BASEDIR#${BASEDIR}#g" ${NGINXDIR}/nginx_sqlite.conf
-        $SED_IE "s#NGINX_PATH#${NGINX_PATH}#g" ${NGINXDIR}/nginx_sqlite.conf
-        $SED_IE "s#NGINX_FILES#${NGINX_FILES}#g" ${NGINXDIR}/nginx_sqlite.conf
-        $SED_IE "s#FCGI_SOCKET#${FCGI_SOCKET}#g" ${NGINXDIR}/nginx_sqlite.conf
     fi
 }
 
