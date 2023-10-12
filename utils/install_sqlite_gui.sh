@@ -297,7 +297,7 @@ function set_secret {
     # sed the secret into secret.py
     echo "Setting the secret used for CGIs"
     CGIDIR=$BASEDIR/sqlite_gui/cgi-bin
-    /usr/bin/sed -e "s/_SECRET = .*/_SECRET = ${SECRET}/" $CGIDIR/secret.py.dist > $CGIDIR/secret.py
+    /usr/bin/sed -e "s/_SECRET = \".*\"/_SECRET = \"${SECRET}\"/" $CGIDIR/secret.py.dist > $CGIDIR/secret.py
     unset SECRET
 }
 
