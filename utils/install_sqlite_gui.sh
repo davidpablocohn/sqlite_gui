@@ -304,14 +304,14 @@ function set_secret {
 ###########################################################################
 ###########################################################################
 function add_system_packages {
-    echo "Installing any needed system packages"
     if [ $OS_TYPE == 'MacOS' ]; then
-
+        echo "Installing MacOS packages"
     # CentOS/RHEL
     elif [ $OS_TYPE == 'CentOS' ]; then
-
+        echo "Installing CentOS packages"
     # Ubuntu/Debian
     elif [ $OS_TYPE == 'Ubuntu' ]; then
+        echo "Installing Ubuntu packages"
         sudo apt-get install -y spawn-fcgi fcgiwrap
     fi
 }
