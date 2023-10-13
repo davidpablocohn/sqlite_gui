@@ -337,10 +337,10 @@ function setup_nginx {
 
     # Fill in wildcards for differences between architectures
     $SED_IE "s#BASEDIR#${BASEDIR}#g" ${NGINXDIR}/nginx_sqlite.conf
-    $SED_IE "s#RVDAS_USER#${RVDAS_USER}#g" ${SUPERVISOR_TEMP_FILE}
+    $SED_IE "s#RVDAS_USER#${RVDAS_USER}#g" ${NGINXDIR}/nginx_sqlite.conf
     $SED_IE "s#NGINX_PATH#${NGINX_PATH}#g" ${NGINXDIR}/nginx_sqlite.conf
     $SED_IE "s#NGINX_FILES#${NGINX_FILES}#g" ${NGINXDIR}/nginx_sqlite.conf
-    $SED_IE "s#FCGI_PATH#${FCGI_PATH}#g" ${SUPERVISOR_TEMP_FILE}
+    $SED_IE "s#FCGI_PATH#${FCGI_PATH}#g" ${NGINXDIR}/nginx_sqlite.conf
     $SED_IE "s#FCGI_SOCKET#${FCGI_SOCKET}#g" ${NGINXDIR}/nginx_sqlite.conf
 
     # ... well... you never know... use http
