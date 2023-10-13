@@ -1,4 +1,6 @@
 # openrvdas_nginx.conf
+user            RVDAS_USER;
+error_log       /var/log/openrvdas/nginx.stderr;
 
 worker_processes  auto;
 events {
@@ -15,12 +17,6 @@ http {
     }
 
     gzip_static   on;
-
-    #log_format  main  ' -  [] "" '
-    #                  '  "" '
-    #                  '"" ""';
-
-    #access_log  logs/access.log  main;
 
     # Section will be commented out if we're not using SSL
     ssl_certificate     BASEDIR/sqlite_gui/nginx/openrvdas.crt;
@@ -44,7 +40,6 @@ http {
         location / {
             # Supervisor web interface over https
             include BASEDIR/sqlite_gui/nginx/nginx_cors.conf;
-            error_log /var/log/openrvdas/nginx.stderr info;
             proxy_pass http://localhost:9001;
             proxy_http_version 1.1;
             proxy_buffering off;
@@ -63,7 +58,6 @@ http {
         server_name _; # accept any host name
         charset     utf-8;
 
-        error_log /var/log/openrvdas/nginx.stderr notice;
         # max upload size
         client_max_body_size 75M;   # adjust to taste
 
@@ -102,7 +96,7 @@ http {
         # This only works if you turn on fcgiwrap
         location /cgi-bin/ {
             root BASEDIR/sqlite_gui;
-            fastcgi_pass  unix:/FCGI_SOCKET;
+            fastcgi_pass  unix://FCGI_SOCKET;
             fastcgi_param HTTP_AUTHORIZATION $http_authorization;
             include       NGINX_FILES/nginx/fastcgi_params;
             fastcgi_pass_header Authorization;
