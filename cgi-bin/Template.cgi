@@ -13,7 +13,7 @@ import secret
 # from os.path import dirname, realpath
 
 # sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
-# from sqlite_gui.sqlite_server_api import SQLiteServerAPI as serverapi # noqa E402
+# from server.sqlite_server_api import SQLiteServerAPI as serverapi # noqa E402
 
 
 ##############################################################################

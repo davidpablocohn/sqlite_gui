@@ -94,7 +94,7 @@ http {
         }
 
         # This only works if you turn on fcgiwrap
-        location /cgi-bin/ {
+        location /sqlite-gui/cgi-bin/ {
             root BASEDIR/sqlite_gui;
             fastcgi_pass  unix://FCGI_SOCKET;
             fastcgi_param HTTP_AUTHORIZATION $http_authorization;

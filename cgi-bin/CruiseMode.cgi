@@ -21,7 +21,7 @@ import secret
 sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
 # from django_gui.django_server_api import DjangoServerAPI as serverapi
 # from server.in_memory_server_api import InMemoryServerAPI as serverapi
-from sqlite_gui.sqlite_server_api import SQLiteServerAPI as serverapi # noqa E402
+from server.sqlite_server_api import SQLiteServerAPI as serverapi # noqa E402
 
 api = serverapi()
 cgitb.enable()

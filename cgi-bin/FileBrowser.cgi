@@ -16,7 +16,7 @@ from os.path import dirname, realpath
 import secret
 
 sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
-from sqlite_gui.sqlite_server_api import SQLiteServerAPI # noqa E402
+from server.sqlite_server_api import SQLiteServerAPI # noqa E402
 from logger.utils.read_config import read_config # noqa E402
 
 api = SQLiteServerAPI()
