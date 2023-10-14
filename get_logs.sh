@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# @/GetLogs.sh ${CRUISE}
+# @/get_logs.sh ${CRUISE}
 
 # If we've done things right, all the CGI's (and the api_tool) will
 # log to the messagelog any time they make a change in logger or
