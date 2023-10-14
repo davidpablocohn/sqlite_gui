@@ -104,7 +104,7 @@ http {
         }
 
         # This only works if you turn on fcgiwrap
-        location /sqlite-gui/cgi-bin/ {
+        location /cgi-bin/ {
             root BASEDIR/sqlite_gui;
             fastcgi_pass  unix://FCGI_SOCKET;
             fastcgi_param HTTP_AUTHORIZATION $http_authorization;
@@ -114,7 +114,13 @@ http {
             fastcgi_param SCRIPT_FILENAME BASEDIR/sqlite_gui/$fastcgi_script_name;
         }
 
-        # Everyting else gets handled normally.
+        # Javascript and css in the /js subdir.
+        location /js/ {
+            ssi on;
+            autoindex on;
+            root BASEDIR/sqlite_gui;
+        }
+        # Everything else gets handled normally.
         location / {
             ssi on;
             autoindex on;

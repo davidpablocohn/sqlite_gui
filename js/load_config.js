@@ -120,7 +120,7 @@ async function load_file(dir, fname) {
     var FileList;
     try {
         var QS = 'dir=' + dir + '&file=' + fname;
-        FileList = await Ajax('get', 'cgi-bin/FileBrowser.cgi?' + QS);
+        FileList = await Ajax('get', 'cgi-bin/file_browser.cgi?' + QS);
     } catch(err) {
         console.error(err);
     }
@@ -237,7 +237,7 @@ function Load_Files(FileList) {
 async function ListFiles(dir) {
     var FileList = {};
     try {
-        FileList = await Ajax('get', 'cgi-bin/FileBrowser.cgi?dir=' + dir);
+        FileList = await Ajax('get', 'cgi-bin/file_browser.cgi?dir=' + dir);
     } catch(err) {
         console.error(err);
     }
@@ -289,7 +289,7 @@ var LoadButton = (function() {
         var fname = el.value || el.placeholder;
         // FIXME:  Should not load via GET
         var params = 'verb=load&fname=' + fname;
-        var url = 'cgi-bin/FileBrowser.cgi?' + params;
+        var url = 'cgi-bin/file_browser.cgi?' + params;
         // FIXME:  Can I use Ajax here?
         var result = await CGI.AjaxGet(url);
         // Response received, set up auto-close
