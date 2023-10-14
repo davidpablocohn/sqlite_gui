@@ -1,6 +1,6 @@
 #!/opt/openrvdas/venv/bin/python
 """
-    cgi-bin/FileBrowser.cgi
+    cgi-bin/file_browser.cgi
 
     Escript that handles GET/PUT for file browser
     (for loading configurations)

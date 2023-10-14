@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-    ${OPENRVDAS}/cgi-bin/Usertool.py
+    ${OPENRVDAS}/cgi-bin/user_tool.py
 
     Manages list of users authorized to make changes to the API via
     the SQLite API web interface.

@@ -1,6 +1,6 @@
 #!/opt/openrvdas/venv/bin/python
 """
-    cgi-bin/Template.cgi
+    cgi-bin/template.cgi
 
     Template for our CGI scripts.
     NOTE:  The CGI module is deprecated in Python 3.11, so for forward

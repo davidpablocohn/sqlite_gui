@@ -3,7 +3,7 @@
 //
 //     Function/Class to handle XML-RPC.  Not sure how generalized it
 //     is since I constructed it to work with the XML-RPC from
-//     Supervisor (as part of OpenRVDAS)
+//     supervisor (as part of OpenRVDAS)
 //
 //     Exports two functions:
 //         createXML(command [,param]) - creates the XMLRPC request body
@@ -62,7 +62,7 @@ var XMLRPC = (function() {
     }
 
     // internal use by parse()
-    // NOTE:  Not a full parser, just what we need to Supervisor's XML-RPC
+    // NOTE:  Not a full parser, just what we need to supervisor's XML-RPC
     //        Well.. maybe a little more.
     function _parseValue(node) {
         var type_node = _firstChildNode(node)
@@ -133,17 +133,17 @@ var XMLRPC = (function() {
 })();
 
 //
-// Supervisor
+// supervisor
 //
 //   Object/Class that queries the supervisord XML-RPC interface,
 //   and populates a table (if it exists) with status information
 //   on the processes defined in the supervisor config.
-var Supervisor = (function() {
+var supervisor = (function() {
 
     // FIXME:  This value should be configurable
     var url = "https://" + document.location.host + ":9000/RPC2";
 
-    var query_Supervisor = async function(method, args) {
+    var query_supervisor = async function(method, args) {
         var post_options = {
             method: 'POST',
             body: XMLRPC.createXML(method, args),
@@ -157,7 +157,7 @@ var Supervisor = (function() {
         }
         if (!post.ok) {
             // construct an error object
-            throw new Error("Supervisor XML-RPC POST not OK");
+            throw new Error("supervisor XML-RPC POST not OK");
         } 
         var t = await post.text();
         try {
@@ -201,7 +201,7 @@ var Supervisor = (function() {
     // Updates the daemon status every 10 seconds
     async function keep_updating() {
         // Get updates
-        var AllStatus = await query_Supervisor('supervisor.getAllProcessInfo');
+        var AllStatus = await query_supervisor('supervisor.getAllProcessInfo');
         for (i in AllStatus) {
             var o = AllStatus[i];
             var name = o.name + '_status';
@@ -229,12 +229,12 @@ var Supervisor = (function() {
         // FIXME:  We should make sure we're talking to 
         //         *supervisor*'s XMLRPC by getting identification.
         //         supervisor.getIdentification
-        var APIVersion = await query_Supervisor('supervisor.getAPIVersion');
+        var APIVersion = await query_supervisor('supervisor.getAPIVersion');
         if (APIVersion != 3) {
-            console.warn("Supervisor XML-RPC version is not 3");
+            console.warn("supervisor XML-RPC version is not 3");
         }
 
-        var AllStatus = await query_Supervisor('supervisor.getAllProcessInfo');
+        var AllStatus = await query_supervisor('supervisor.getAllProcessInfo');
 
         var i, status;
         var daemons = [];
@@ -252,7 +252,7 @@ var Supervisor = (function() {
     try {
         do_stuff();
     } catch {
-        console.log('Some error occurred in Supervisor');
+        console.log('Some error occurred in supervisor');
     }
 
     return {

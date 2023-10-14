@@ -1,6 +1,6 @@
 #!/opt/openrvdas/venv/bin/python
 """
-    cgi-bin/LoggerMode.cgi
+    cgi-bin/logger_mode.cgi
 
     Handles request from the logger buttons.
     GET requests provide a list of logger config names for the logger.

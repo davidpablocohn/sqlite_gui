@@ -1,6 +1,6 @@
 #!/opt/openrvdas/venv/bin/python
 """
-    cgi-bin/Auth.cgi
+    cgi-bin/auth.cgi
 
     Handles login a secure (enough) manner.
 

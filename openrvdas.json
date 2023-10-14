@@ -31,7 +31,7 @@
         //     'name': alternate name to display 
         //     'tooltip': 'text for a tooltip for this link'
         // }
-        "Supervisor": {
+        "supervisor": {
             'url': "http://${host}:9001",
             'tooltip': 'some clever quip',
         },

@@ -1,6 +1,6 @@
 #!/opt/openrvdas/venv/bin/python
 """
-    cgi-bin/YamlLint.cgi
+    cgi-bin/yaml_lint.cgi
 
     Runs lint on the fname given in the QueryString
     returns JSON with errors/warnings.

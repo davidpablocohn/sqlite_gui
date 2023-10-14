@@ -1,6 +1,6 @@
 #!/opt/openrvdas/venv/bin/python
 """
-    cgi-bin/CruiseMode.cgi
+    cgi-bin/cruise_mode.cgi
 
     Script that handles GET/PUT for changing logger manager mode GET
     request return HTML with form fields enumerating the cruise modes

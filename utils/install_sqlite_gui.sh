@@ -166,12 +166,12 @@ function determine_flavor {
 
 ###########################################################################
 ###########################################################################
-### Supervisor
+### supervisor
 function setup_supervisor {
     echo "Setting up the supervisor config for SQLite GUI"
     if [ $OS_TYPE == 'MacOS' ]; then
         SUPERVISOR_DIR=/usr/local/etc/supervisor.d
-        SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/Supervisor/openrvdas_sqlite.ini.macos
+        SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/supervisor/openrvdas_sqlite.ini.macos
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
 
         FCGI_PATH=/usr/local/homebrew
@@ -185,7 +185,7 @@ function setup_supervisor {
         sudo ln -s -f /etc/nginx /usr/local/etc/nginx
 
         SUPERVISOR_DIR=/etc/supervisord.d
-        SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/Supervisor/openrvdas_sqlite.ini
+        SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/supervisor/openrvdas_sqlite.ini
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
 
         FCGI_PATH=/usr
@@ -201,7 +201,7 @@ function setup_supervisor {
         sudo ln -s -f /etc/nginx /usr/local/etc/nginx
 
         SUPERVISOR_DIR=/etc/supervisor/conf.d
-        SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/Supervisor/openrvdas_sqlite.ini
+        SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/supervisor/openrvdas_sqlite.ini
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.conf
 
         FCGI_PATH=/usr
@@ -264,13 +264,12 @@ function get_basedir {
 ###########################################################################
 function make_certificate {
     SAVEPWD=${PWD}
-    cd ../nginx
-    if [ -f openrvdas.crt -a -f openrvdas.key ] ; then
-        echo "Looks like you already have required certificates."
-        echo "If you want to over-write them, cd to ../nginx"
-        echo "and run GenerateCert.sh"
+    cd ${BASEDIR}
+    if [ -f ${BASEDIR}/openrvdas.crt -a -f ${BASEDIR}/openrvdas.key ] ; then
+        echo "Looks like you already have required certificates. If you"
+        echo "want to over-write them, run sqlite_gui/utils/generate_cert.sh"
     else
-        /bin/bash ${BASEDIR}/sqlite_gui/nginx/GenerateCert.sh
+        /bin/bash ${BASEDIR}/sqlite_gui/utils/generate_cert.sh
     fi
     cd ${SAVEPWD}
 }
