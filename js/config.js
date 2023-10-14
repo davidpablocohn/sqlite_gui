@@ -125,7 +125,7 @@ function Load_Config() {
     // the time the other script files need them.
     // 
     var r = new XMLHttpRequest();
-    r.open('GET', '/openrvdas.json', false);
+    r.open('GET', '/js/openrvdas.json', false);
     r.send(null);
     if (r.status == 200) {
         window.odas = {}; // explicitly create global object
@@ -150,7 +150,7 @@ function Load_Config() {
             });
         }
     } else {
-        cosole.error("Unable to load config file");
+        console.error("Unable to load config file");
     }
 }
 
