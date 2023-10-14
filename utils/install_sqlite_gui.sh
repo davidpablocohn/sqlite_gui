@@ -457,7 +457,7 @@ setup_supervisor
 # Generate cert/key for nginx if requested
 echo
 echo "############################################"
-echo "Generating self-signed certificates in $BASEDIR"
+echo "Generating self-signed certificates in $BASEDIR/openrvdas.[key,crt]"
 #[[ "${MAKE_CERT}" == 'yes' ]] && make_certificate
 make_certificate
 
