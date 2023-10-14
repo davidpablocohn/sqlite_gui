@@ -457,7 +457,10 @@ setup_supervisor
 # Generate cert/key for nginx if requested
 echo
 echo "############################################"
-[[ "${MAKE_CERT}" == 'yes' ]] && make_certificate
+echo "Generating self-signed certificates"
+#[[ "${MAKE_CERT}" == 'yes' ]] && make_certificate
+make_certificate
+
 # Generate a random secret if requested
 [ "${RANDOM_SECRET}" == 'yes' ] && SECRET=`random_secret`
 # If we have a secret (supplied or random), set it

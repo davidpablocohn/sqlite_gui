@@ -55,8 +55,8 @@ SERVER_IP_3=127.0.1.1
 
 # Script will generate a SAN enabled wildcard Cert
 function generate_self_signed_ca() {
-    echo "Generaing domain key"
-    echo "Generaing domain key" >&2
+    echo "Generating domain key"
+    echo "Generating domain key" >&2
     openssl genrsa -out ${DOMAIN}.key 4096
     STATUS=$?
     if [ $STATUS != 0 ] ; then
