@@ -103,9 +103,10 @@ http {
             proxy_set_header Connection "upgrade";
         }
 
-        # This only works if you turn on fcgiwrap
-        location /cgi-bin/ {
-            root BASEDIR/sqlite_gui;
+        # This only works if you turn on fcgiwrap. We need BASEDIR to be root
+        # because the scripts reference BASEDIR/server/sqlite_server_api.py
+        location /sqlite-gui/cgi-bin/ {
+            root BASEDIR;
             fastcgi_pass  unix://FCGI_SOCKET;
             fastcgi_param HTTP_AUTHORIZATION $http_authorization;
             include       NGINX_FILES/nginx/fastcgi_params;
