@@ -244,6 +244,7 @@ function setup_supervisor {
                 echo "Moving OpenRVDAS supervisor config file \"${OLD_SUPERVISOR_FILE}\" out of the way"
                 sudo /bin/mv -f ${OLD_SUPERVISOR_FILE} ${OLD_SUPERVISOR_FILE}.bak
             fi
+        fi
     else
         echo "Unable to set up supervisor for you."
     fi
