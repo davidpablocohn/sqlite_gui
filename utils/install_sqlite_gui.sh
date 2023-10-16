@@ -501,8 +501,9 @@ setup_nginx
 echo
 echo "############################################"
 echo "Reloading/restarting supervisord"
-supervisorctl reload
+sudo supervisorctl reload
 sleep 5
+supervisorctl start sqlite:*
 
 echo "Success! Please run "
 echo
