@@ -11,12 +11,14 @@ import cgi
 import cgitb
 import sys
 import os
-from os.path import dirname, realpath
-# import jwt
 import secret
 
-sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
-from server.sqlite_server_api import SQLiteServerAPI as serverapi # noqa E402
+# Local imports
+import secret                               # noqa E402
+from openrvdas_vars import OPENRVDAS_ROOT   # noqa E402
+sys.path.append(OPENRVDAS_ROOT)
+from server.sqlite_server_api import SQLiteServerAPI as serverapi  # noqa E402
+
 
 api = serverapi()
 cgitb.enable()

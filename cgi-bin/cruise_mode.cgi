@@ -12,16 +12,14 @@
 
 import cgi
 import cgitb
-import sys
 import os
-# import jwt
-from os.path import dirname, realpath
-import secret
+import sys
 
-sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
-# from django_gui.django_server_api import DjangoServerAPI as serverapi
-# from server.in_memory_server_api import InMemoryServerAPI as serverapi
-from server.sqlite_server_api import SQLiteServerAPI as serverapi # noqa E402
+# Local imports
+import secret                               # noqa E402
+from openrvdas_vars import OPENRVDAS_ROOT   # noqa E402
+sys.path.append(OPENRVDAS_ROOT)
+from server.sqlite_server_api import SQLiteServerAPI as serverapi  # noqa E402
 
 api = serverapi()
 cgitb.enable()

@@ -11,11 +11,13 @@ import cgitb
 import sys
 import os
 import json
-from os.path import dirname, realpath
-# import jwt
 import secret
 
-sys.path.append(dirname(dirname(dirname(realpath(__file__)))))
+# Local imports
+import secret                               # noqa E402
+from openrvdas_vars import OPENRVDAS_ROOT   # noqa E402
+sys.path.append(OPENRVDAS_ROOT)
+from server.sqlite_server_api import SQLiteServerAPI as serverapi  # noqa E402
 from server.sqlite_server_api import SQLiteServerAPI # noqa E402
 from logger.utils.read_config import read_config # noqa E402
 

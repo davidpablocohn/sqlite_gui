@@ -62,7 +62,7 @@ yes_no() {
 function set_default_variables {
     # Defaults that will be overwritten by the preferences file, if it
     # exists.
-    BASEDIR='/opt/openrvdas'
+    OPENRVDAS_ROOT='/opt/openrvdas'
     RVDAS_USER='rvdas'
     RANDOM_SECRET=yes
     MAKE_CERT=no
@@ -83,7 +83,7 @@ function save_default_variables {
     cat > $PREFERENCES_FILE <<EOF
 # Defaults written by/to be read by install_sqlite_gui.sh
 OS_TYPE=${OS_TYPE}
-BASEDIR=${BASEDIR}
+OPENRVDAS_ROOT=${OPENRVDAS_ROOT}
 RVDAS_USER=${RVDAS_USER}
 MAKE_CERT=${MAKE_CERT}
 USE_HTTP=${USE_HTTP}
@@ -171,7 +171,7 @@ function setup_supervisor {
     echo "Setting up the supervisor config for SQLite GUI"
     if [ $OS_TYPE == 'MacOS' ]; then
         SUPERVISOR_DIR=/usr/local/etc/supervisor.d
-        SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/supervisor/openrvdas_sqlite.ini.macos
+        SUPERVISOR_SOURCE_FILE=${OPENRVDAS_ROOT}/sqlite_gui/supervisor/openrvdas_sqlite.ini.macos
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
 
         FCGI_PATH=/usr/local/homebrew
@@ -185,7 +185,7 @@ function setup_supervisor {
         sudo ln -s -f /etc/nginx /usr/local/etc/nginx
 
         SUPERVISOR_DIR=/etc/supervisord.d
-        SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/supervisor/openrvdas_sqlite.ini
+        SUPERVISOR_SOURCE_FILE=${OPENRVDAS_ROOT}/sqlite_gui/supervisor/openrvdas_sqlite.ini
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
 
         FCGI_PATH=/usr
@@ -201,7 +201,7 @@ function setup_supervisor {
         sudo ln -s -f /etc/nginx /usr/local/etc/nginx
 
         SUPERVISOR_DIR=/etc/supervisor/conf.d
-        SUPERVISOR_SOURCE_FILE=${BASEDIR}/sqlite_gui/supervisor/openrvdas_sqlite.ini
+        SUPERVISOR_SOURCE_FILE=${OPENRVDAS_ROOT}/sqlite_gui/supervisor/openrvdas_sqlite.ini
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.conf
 
         FCGI_PATH=/usr
@@ -223,7 +223,7 @@ function setup_supervisor {
             cp ${SUPERVISOR_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
 
             # First replace variables in the file with actual installation-specific values
-            $SED_IE "s#BASEDIR#${BASEDIR}#g" ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#OPENRVDAS_ROOT#${OPENRVDAS_ROOT}#g" ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#RVDAS_USER#${RVDAS_USER}#g" ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#FCGI_PATH#${FCGI_PATH}#g" ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#FCGI_SOCKET#${FCGI_SOCKET}#g" ${SUPERVISOR_TEMP_FILE}
@@ -246,15 +246,15 @@ function normalize_path {
 ###########################################################################
 ###########################################################################
 # Figure out which directory is root for OpenRVDAS code
-function get_basedir {
-    DEFAULT_BASEDIR=$BASEDIR
-    read -p "Path to OpenRVDAS installation? ($DEFAULT_BASEDIR) " BASEDIR
-    BASEDIR=${BASEDIR:-$DEFAULT_BASEDIR}
+function get_openrvdas_root {
+    DEFAULT_OPENRVDAS_ROOT=$OPENRVDAS_ROOT
+    read -p "Path to OpenRVDAS installation? ($DEFAULT_OPENRVDAS_ROOT) " OPENRVDAS_ROOT
+    OPENRVDAS_ROOT=${OPENRVDAS_ROOT:-$DEFAULT_OPENRVDAS_ROOT}
 
     # Check that we're linked in. Arbitrarily, do it by looking for this file.
-    while [[ ! -f ${BASEDIR}/sqlite_gui/utils/install_sqlite_gui.sh ]]; do
+    while [[ ! -f ${OPENRVDAS_ROOT}/sqlite_gui/utils/install_sqlite_gui.sh ]]; do
         echo
-        echo "No \"sqlite_gui\" subdir found in OpenRVDAS installation at \"${BASEDIR}\"."
+        echo "No \"sqlite_gui\" subdir found in OpenRVDAS installation at \"${OPENRVDAS_ROOT}\"."
         echo "Please create a symlink from the sqlite_gui code to this directory, then hit"
         read -p "\"Return\" to continue. "
     done
@@ -264,12 +264,12 @@ function get_basedir {
 ###########################################################################
 function make_certificate {
     SAVEPWD=${PWD}
-    cd ${BASEDIR}
-    if [ -f ${BASEDIR}/openrvdas.crt -a -f ${BASEDIR}/openrvdas.key ] ; then
+    cd ${OPENRVDAS_ROOT}
+    if [ -f ${OPENRVDAS_ROOT}/openrvdas.crt -a -f ${OPENRVDAS_ROOT}/openrvdas.key ] ; then
         echo "Looks like you already have required certificates. If you"
         echo "want to over-write them, run sqlite_gui/utils/generate_cert.sh"
     else
-        /bin/bash ${BASEDIR}/sqlite_gui/utils/generate_cert.sh
+        /bin/bash ${OPENRVDAS_ROOT}/sqlite_gui/utils/generate_cert.sh
     fi
     cd ${SAVEPWD}
 }
@@ -295,7 +295,7 @@ function random_secret {
 function set_secret {
     # sed the secret into secret.py
     echo "Setting the secret used for CGIs"
-    CGIDIR=$BASEDIR/sqlite_gui/cgi-bin
+    CGIDIR=$OPENRVDAS_ROOT/sqlite_gui/cgi-bin
     /usr/bin/sed -e "s/_SECRET = \".*\"/_SECRET = \"${SECRET}\"/" $CGIDIR/secret.py.dist > $CGIDIR/secret.py
     unset SECRET
 }
@@ -331,11 +331,11 @@ function add_python_packages {
 ###########################################################################
 ###########################################################################
 function setup_nginx {
-    NGINXDIR=${BASEDIR}/sqlite_gui/nginx
+    NGINXDIR=${OPENRVDAS_ROOT}/sqlite_gui/nginx
     cp ${NGINXDIR}/nginx_sqlite.conf.dist ${NGINXDIR}/nginx_sqlite.conf
 
     # Fill in wildcards for differences between architectures
-    $SED_IE "s#BASEDIR#${BASEDIR}#g" ${NGINXDIR}/nginx_sqlite.conf
+    $SED_IE "s#OPENRVDAS_ROOT#${OPENRVDAS_ROOT}#g" ${NGINXDIR}/nginx_sqlite.conf
     $SED_IE "s#RVDAS_USER#${RVDAS_USER}#g" ${NGINXDIR}/nginx_sqlite.conf
     $SED_IE "s#NGINX_PATH#${NGINX_PATH}#g" ${NGINXDIR}/nginx_sqlite.conf
     $SED_IE "s#NGINX_FILES#${NGINX_FILES}#g" ${NGINXDIR}/nginx_sqlite.conf
@@ -388,11 +388,11 @@ while [ $# -gt 0 ] ; do
              OS_TYPE=$2
              shift
              ;;
-         -basedir)
+         -openrvdas_root)
              if [ -d $2 ] ; then
-                 BASEDIR=$2
+                 OPENRVDAS_ROOT=$2
              else
-                 echo "basedir not a directory: $2"
+                 echo "openrvdas_root not a directory: $2"
              fi
              shift
              ;;
@@ -440,14 +440,21 @@ fi
 # Figure out where our installation is
 echo
 echo "############################################"
-get_basedir
+get_openrvdas_root
 
 # Set ourselves up in the same virtual environment
-source ${BASEDIR}/venv/bin/activate
+source ${OPENRVDAS_ROOT}/venv/bin/activate
 
 DEFAULT_RVDAS_USER=$RVDAS_USER
 read -p "User to set GUI up as? ($DEFAULT_RVDAS_USER) " RVDAS_USER
 RVDAS_USER=${RVDAS_USER:-$DEFAULT_RVDAS_USER}
+
+# Set up a helper file for CGI scripts
+cat >> ${OPENRVDAS_ROOT}/sqlite_gui/cgi-bin/openrvdas_vars.py << EOF
+# Helper variables from OpenRVDAS
+
+OPENRVDAS_ROOT = '${OPENRVDAS_ROOT}'
+EOF
 
 # As it says on the tin, set up the supervisor file
 echo
@@ -457,7 +464,7 @@ setup_supervisor
 # Generate cert/key for nginx if requested
 echo
 echo "############################################"
-echo "Generating self-signed certificates in $BASEDIR/openrvdas.[key,crt]"
+echo "Generating self-signed certificates in $OPENRVDAS_ROOT/openrvdas.[key,crt]"
 #[[ "${MAKE_CERT}" == 'yes' ]] && make_certificate
 make_certificate
 
