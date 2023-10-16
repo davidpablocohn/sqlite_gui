@@ -2,6 +2,7 @@
 .install_sqlite_gui_preferences
 
 # Changeable file generated from secret.py.dist
+cgi-bin/openrvdas_vars.py
 cgi-bin/secret.py
 cgi-bin/secret.pye
 
