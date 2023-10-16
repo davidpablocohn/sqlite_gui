@@ -23,13 +23,5 @@ Once that has completed, you'll need to create a user for the SQLite web interfa
 
     cgi-bin/user_tool.py -add --user <user> --password <password>
 
-Eventually the installation script will reload the supervisor daemon and set the things 
-you want running, but for now, do it manually:
-
-    supervisorctl reload  # then wait a few seconds
-    supervisorctl stop openrvdas:* nginx:*  # stop the Django-based scripts
-    supervisorctl start sqlite:*  # start sqlite-based scriptw
-    supervisorctl status  # check that everything is running as intended
-
-At this point, goint to https://hostname should take you to the initial (still
+At this point, going to https://hostname should take you to the initial (still
 rudimentary) SQLite GUI page.

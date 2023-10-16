@@ -171,8 +171,10 @@ function setup_supervisor {
     echo "Setting up the supervisor config for SQLite GUI"
     if [ $OS_TYPE == 'MacOS' ]; then
         SUPERVISOR_DIR=/usr/local/etc/supervisor.d
+        SUPERVISOR_SOCKET=/usr/local/var/run/supervisor.sock
         SUPERVISOR_SOURCE_FILE=${OPENRVDAS_ROOT}/sqlite_gui/supervisor/openrvdas_sqlite.ini.macos
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
+        OLD_SUPERVISOR_FILE=$SUPERVISOR_DIR/openrvdas.ini
 
         FCGI_PATH=/usr/local/homebrew
         FCGI_SOCKET=/var/run/fcgiwrap.sock
@@ -185,8 +187,10 @@ function setup_supervisor {
         sudo ln -s -f /etc/nginx /usr/local/etc/nginx
 
         SUPERVISOR_DIR=/etc/supervisord.d
+        SUPERVISOR_SOCKET=/var/run/supervisor/supervisor.sock
         SUPERVISOR_SOURCE_FILE=${OPENRVDAS_ROOT}/sqlite_gui/supervisor/openrvdas_sqlite.ini
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
+        OLD_SUPERVISOR_FILE=$SUPERVISOR_DIR/openrvdas.ini
 
         FCGI_PATH=/usr
         FCGI_SOCKET=/var/run/supervisor/fcgiwrap.sock
@@ -201,8 +205,10 @@ function setup_supervisor {
         sudo ln -s -f /etc/nginx /usr/local/etc/nginx
 
         SUPERVISOR_DIR=/etc/supervisor/conf.d
+        SUPERVISOR_SOCKET=/var/run/supervisor.sock
         SUPERVISOR_SOURCE_FILE=${OPENRVDAS_ROOT}/sqlite_gui/supervisor/openrvdas_sqlite.ini
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.conf
+        OLD_SUPERVISOR_FILE=$SUPERVISOR_DIR/openrvdas.conf
 
         FCGI_PATH=/usr
         FCGI_SOCKET=/var/run/fcgiwrap.sock
@@ -225,13 +231,19 @@ function setup_supervisor {
             # First replace variables in the file with actual installation-specific values
             $SED_IE "s#OPENRVDAS_ROOT#${OPENRVDAS_ROOT}#g" ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#RVDAS_USER#${RVDAS_USER}#g" ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#SUPERVISOR_SOCKET#${SUPERVISOR_SOCKET}#g" ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#FCGI_PATH#${FCGI_PATH}#g" ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#FCGI_SOCKET#${FCGI_SOCKET}#g" ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#NGINX_PATH#${NGINX_PATH}#g" ${SUPERVISOR_TEMP_FILE}
 
             # Then copy into place
             sudo /bin/mv ${SUPERVISOR_TEMP_FILE} ${SUPERVISOR_TARGET_FILE}
-        fi
+
+            # Move old openrvdas config out of the way
+            if [ -e "${OLD_SUPERVISOR_FILE}" ]; then
+                echo "Moving OpenRVDAS supervisor config file \"${OLD_SUPERVISOR_FILE}\" out of the way"
+                sudo /bin/mv -f ${OLD_SUPERVISOR_FILE} ${OLD_SUPERVISOR_FILE}.bak
+            fi
     else
         echo "Unable to set up supervisor for you."
     fi
@@ -331,6 +343,7 @@ function add_python_packages {
 ###########################################################################
 ###########################################################################
 function setup_nginx {
+    echo "Setting up NGinx"
     NGINXDIR=${OPENRVDAS_ROOT}/sqlite_gui/nginx
     cp ${NGINXDIR}/nginx_sqlite.conf.dist ${NGINXDIR}/nginx_sqlite.conf
 
@@ -483,6 +496,12 @@ echo "############################################"
 # Copy our NGinx config file into place and, if requested,
 # modify it to use vanilla HTTP
 setup_nginx
+
+echo
+echo "############################################"
+echo "Reloading/restarting supervisord"
+supervisorctl reload
+sleep 5
 
 echo "Success! Please run "
 echo
