@@ -90,7 +90,7 @@ var LoggerModal = (function() {
             title_el.innerHTML = "Change " + logger_id + " mode";
         }
         // fill in modal body
-        var url = '/sqlite-gui/cgi-bin/logger_mode.cgi?' + logger_id;
+        var url = '/cgi-bin/logger_mode.cgi?' + logger_id;
         var result = await CGI.AjaxGet(url);
         timer = setTimeout(auto_close, 30000);
         if (body_el) {
@@ -229,7 +229,7 @@ var CruiseModeModal = (function() {
                 bsm.hide();
             }
         }
-        var result = await CGI.AjaxGet("/sqlite-gui/cgi-bin/cruise_mode.cgi");
+        var result = await CGI.AjaxGet("/cgi-bin/cruise_mode.cgi");
         timer = setTimeout(auto_close, 30000);
         if (modal_body) {
             modal_body.innerHTML = result;
@@ -267,7 +267,7 @@ var Reload_Button = (function() {
         }
         var fname = reload_el.title;
         var params = 'verb=load&fname=' + fname;
-        var url = '/sqlite-gui/cgi-bin/file_browser.cgi?' + params;
+        var url = '/cgi-bin/file_browser.cgi?' + params;
         // FIXME:  Can I use Ajax here?
         var result = await CGI.AjaxGet(url);
         // Response received, set up auto-close
