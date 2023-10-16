@@ -485,4 +485,11 @@ echo "############################################"
 # modify it to use vanilla HTTP
 setup_nginx
 
-echo "Success! Happy logging..."
+echo "############################################"
+echo "Success! Please run "
+echo
+echo "  cgi-bin/user_tool.py -add -u <user> -p <password>"
+echo
+echo "to create a user for the SQLite web interface. "
+echo
+echo "Happy logging..."

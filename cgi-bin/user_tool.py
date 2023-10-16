@@ -17,8 +17,13 @@
 import argparse
 import hashlib
 import shelve
+import sys
 
-DBFILE = './passwd/passwd-ish'
+# Local imports
+from openrvdas_vars import OPENRVDAS_ROOT
+sys.path.append(OPENRVDAS_ROOT)
+
+DBFILE = OPENRVDAS_ROOT + '/sqlite_gui/cgi-bin/passwd/passwd-ish'
 
 
 ##############################################################################
