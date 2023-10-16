@@ -421,7 +421,6 @@ while [ $# -gt 0 ] ; do
     shift
 done
 
-echo "############################################"
 # We might have OS_TYPE in prefs
 if [ -n "$OS_TYPE" ]; then
     echo "OS type set to \"$OS_TYPE\""
@@ -485,10 +484,9 @@ echo "############################################"
 # modify it to use vanilla HTTP
 setup_nginx
 
-echo "############################################"
 echo "Success! Please run "
 echo
-echo "  cgi-bin/user_tool.py -add -u <user> -p <password>"
+echo "  cgi-bin/user_tool.py -add --user <user> --password <password>"
 echo
 echo "to create a user for the SQLite web interface. "
 echo
