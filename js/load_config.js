@@ -127,7 +127,7 @@ async function load_file(dir, fname) {
     } catch(err) {
         console.error(err);
     }
-    if (yaml_editor) {
+    if (yaml_editor && FileList.text) {
         yaml_editor.setValue(FileList.text);
     }
 }
