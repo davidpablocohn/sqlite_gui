@@ -119,7 +119,11 @@ var autoClose = (function() {
 async function load_file(dir, fname) {
     var FileList;
     try {
-        var QS = 'dir=' + dir + '&file=' + fname;
+        var QS = 'dir=' + dir;
+        if (fname) {
+            QS += '&file=' + fname;
+            }
+        }
         FileList = await Ajax('get', '/cgi-bin/file_browser.cgi?' + QS);
     } catch(err) {
         console.error(err);
