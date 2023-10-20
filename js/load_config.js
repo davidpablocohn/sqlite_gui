@@ -117,6 +117,9 @@ var autoClose = (function() {
 })();
 
 async function load_file(dir, fname) {
+    if (fname == "null") {
+        return;
+    }
     var FileList;
     try {
         var QS = 'dir=' + dir;
@@ -133,7 +136,7 @@ async function load_file(dir, fname) {
 }
 
 async function yproxy() {
-    var url = '/cgi-bin/yaml_int.cgi?fname='
+    var url = '/cgi-bin/yaml_lint.cgi?fname='
     var el = document.getElementById('current_file');
     var fname = el.value || el.placeholder;
     if (fname == "name of current config file") {
@@ -152,8 +155,9 @@ window.yproxy = yproxy;
 async function dir_clicked(evt) {
     autoClose.reset();
     var target = evt.target;
-    var name = target.innerText;
-    console.log("Clicked " + name);
+    var name = target.innerText.trim();
+    console.log("Clicked \"" + name + "\"");
+    
     if (name == "..") {
         var c = current_directory;
         var d = c.substring(0, c.lastIndexOf('/'));
@@ -216,11 +220,15 @@ function Load_Files(FileList) {
     // Show current directory
     addElement(fb, 'i', '', FileList.dir);
     addBreak(fb);
-    // Show "up" ".." thingee
-    s = addElement(fb, 'i', 'bi-arrow-90deg-up', '');
-    s = addElement(fb, 'a', '', "  ..");
-    addBreak(fb);
-    s.addEventListener('click', dir_clicked);
+    // Show "up" ".." thingee (unless at permissible root)
+    odas = odas || {};
+    safedir = odas.safedir || '/opt/openrvdas';
+    if (FileList.dir != safedir) {
+        s = addElement(fb, 'i', 'bi-arrow-90deg-up', '');
+        s = addElement(fb, 'a', '', "  ..");
+        addBreak(fb);
+        s.addEventListener('click', dir_clicked);
+    }
      
     // Add the dirs and files.  
     for (var dir in FileList.dirs) {

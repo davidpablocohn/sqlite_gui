@@ -84,7 +84,7 @@ async function Ajax(method, url, options={}) {
 //
 //  Load_Config_JSON() ==> (nothing)
 //
-//      Loads the file openrvdas.json5 (found in this directory)
+//      Loads the file openrvdas.json (found in this directory)
 //      Creates and populates the 'odas' object which holds the
 //      global config values.
 //
@@ -122,7 +122,8 @@ function Load_Config() {
 
     // Have to load the config synchronous, not async
     // otherwise our config values will not exists by 
-    // the time the other script files need them.
+    // the time the other script files need them, and
+    // chaining is not appropriate here.
     // 
     var r = new XMLHttpRequest();
     r.open('GET', '/js/openrvdas.json', false);
