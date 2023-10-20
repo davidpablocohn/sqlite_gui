@@ -10,52 +10,18 @@ import cgi
 import cgitb
 import sys
 import os
-import json
+import json5 as json
 import secret
 
 # Local imports
 import secret                               # noqa E402
 from openrvdas_vars import OPENRVDAS_ROOT   # noqa E402
 sys.path.append(OPENRVDAS_ROOT)
-from server.sqlite_server_api import SQLiteServerAPI as serverapi  # noqa E402
 from server.sqlite_server_api import SQLiteServerAPI # noqa E402
 from logger.utils.read_config import read_config # noqa E402
 
 api = SQLiteServerAPI()
 cgitb.enable()
-
-
-##############################################################################
-# def validate_token():
-#    """ We should have received a JWT in the Authorization header.
-#        Validate it.
-#    """
-
-#    our_secret = secret.SECRET
-#    auth_header = os.environ.get('HTTP_AUTHORIZATION', None)
-#    if not auth_header:
-#        print("No auth header", file=sys.stderr)
-#        return None
-#    else:
-#        # print("Auth header = ", auth_header, file=sys.stderr)
-#        pass
-#
-#    auth_split = auth_header.split(' ')
-#    if len(auth_split) > 1:
-#        token = auth_split[1]
-#        # print("Token = ", token, file=sys.stderr)
-#    else:
-#        print("Auth header unparseable", file=sys.stderr)
-#        return None
-#    payload = {}
-#    try:
-#        payload = jwt.decode(token, our_secret, algorithms="HS256" )
-#    except jwt.PyJWTError as err:
-#        print("PyJWTError: ", err, file=sys.stderr)
-#        return None
-#
-#    return payload.get('name', None)
-
 
 ##############################################################################
 def handle_get():
@@ -111,15 +77,29 @@ def process_get():
         optionally:
           'text': "Text of file"
         }
-     """
-
+    """
     # Saw an example that this works on QS, too.  I guess we can try
     content = {}
     form = {}
     fs = cgi.FieldStorage()
     for key in fs.keys():
         form[key] = fs[key].value
-    # print("Query = %s" % form, file=sys.stderr)
+    print("Query = %s" % form, file=sys.stderr)
+
+    # Get our safedir
+    config = None
+    try:
+        # Style question:  Should we use urllib.request here?
+        f = open("../js/openrvdas.json")
+        config = json.load(f)
+        f.close()
+    except Exception as error:
+        print("Error trying to load config.json: %s" % error, file=sys.stderr)
+        content['ok'] = 0
+        content['error'] = str(error)
+        return ([], content, 451)
+    safedir = config.get('safedir', '/opt/openrvdas')
+    print('safedir = %s' % safedir, file=sys.stderr)
 
     try:
         if form.get('verb', None) == 'load':
@@ -130,8 +110,16 @@ def process_get():
         content['ok'] = 0
         content['error'] = err
         return ([], content, 451)
-    dirname = form.get('dir', '/opt/openrvdas/local')
-    # FIXME:  Validate dirname or 400 (maybe 406)
+    dirname = form.get('dir', OPENRVDAS_ROOT)
+
+    # Validate dirname for safety
+    apath = os.path.abspath(dirname)
+    if not apath.startswith(safedir):
+        print("rectified path (%s) does not start with safedir(%s)" % (apath, safedir), file=sys.stderr)
+        content['ok'] = 0
+        content['error'] = 'Cannot browse outside safety zone'
+        return ([], content, 403)
+
     if not os.path.isdir(dirname):
         content['error'] = "Not a directory: %s" % dirname
         return ([], content, 400)
@@ -158,12 +146,20 @@ def process_get():
         return ([], content, 451)
 
     fname = form.get('file', None)
+    if fname == "null":
+        fname = None
     # FIXME:  Security:  Need to not send text of arbitrary file
     #         (Like /etc/shadow).
     if fname:
-        filepath = os.path.join(dirname, fname)
-        with open(filepath, 'r') as file:
-            content['text'] = file.read()
+        try:
+            filepath = os.path.join(dirname, fname)
+            with open(filepath, 'r') as file:
+                content['text'] = file.read()
+        except Exception as error:
+            content = {}
+            content['error'] = 'Cannot read file %s' % fname
+            content['exception'] = error
+            return ([], content, 403)
 
     return ([], content, 200)
 
@@ -202,7 +198,7 @@ def process_post_request():
     fs = cgi.FieldStorage()
     for key in fs.keys():
         form[key] = fs[key].value
-        # print("%s = %s" % (key, form[key]), file=sys.stderr)
+        print("%s = %s" % (key, form[key]), file=sys.stderr)
 
     fname = form.get('fname', None)
     if not fname:
@@ -218,7 +214,7 @@ def process_post_request():
         config = read_config(fname)
         config['config_filename'] = fname
         api.load_configuration(config)
-        config = api.get_configuration()
+        #config = api.get_configuration()
         # FIXME:  Log this to api.messagelog
         # print(config['cruise'], file=sys.stderr)
     except Exception as err:
@@ -250,3 +246,10 @@ if __name__ == "__main__":
     except Exception as err:
         # This will show up in /var/log/openrvdas/fcgiwrap_stderr.log
         print("Error processing form: %s" % err, file=sys.stderr)
+        Q = "Unhandled exceptionL %s" % err
+        content['ok'] = 'false'
+        content['error'] = Q
+        print("Content-Type: text/json")
+        print("Status: 500")
+        print("")
+        print(content)

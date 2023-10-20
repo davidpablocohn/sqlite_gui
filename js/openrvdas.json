@@ -91,7 +91,7 @@
     //           loading /etc/passwd or something equally nefarious.
     // "confdir": '/opt/openrvdas/local/myorg/myship',
     // "safedir": '/opt/openrvdas/local',
-    confdir: '/opt/openrvdas/local/usap/lmg',
+    confdir: '/opt/openrvdas/local',
     safedir: '/opt/openrvdas/local',
 
     "ham": "eggs",

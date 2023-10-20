@@ -334,7 +334,7 @@ function add_system_packages {
 ###########################################################################
 ###########################################################################
 function add_python_packages {
-    packages="PyJWT yamllint"  #  py-setproctitle"
+    packages="PyJWT yamllint json5"  #  py-setproctitle"
     echo "Installing python libraries: ${packages}"
     for pkg in $packages ; do
         pip -q install $pkg

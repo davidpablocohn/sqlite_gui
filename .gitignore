@@ -11,6 +11,7 @@ openrvdas.sql
 
 # Installation-modified version of nginx/nginx_sqlite.conf.dist
 nginx/nginx_sqlite.conf
+nginx/nginx_sqlite.confe
 
 # Pycharm directory
 .idea
