@@ -2,45 +2,11 @@
 // Javascript for the 'head.html' stub included in all (most) of
 // the webpages presented to the public.
 //
-// includes fixups for the navbar, login/logout forms, and gets us 
-// our (former) framework variables
+// includes functions for theme switcher and
+// handles the login/logout form
 //
-// Typical invocation will look like:
-//
-//    <script type="text/javascript">
-//      // Need to define for following JS scripts. For now, count on the
-//      // relevant variables being set by Django.
-//      var WEBSOCKET_SERVER = "{{ websocket_server }}";
-//      {% if user.is_authenticated %}
-//        var USER_AUTHENTICATED = true;
-//      {% else %}
-//        var USER_AUTHENTICATED = false;
-//      {% endif %}
-//    </script>
-//
-//    <script src="/static/django_gui/index.html.js"></script>
-//    <script src="/static/django_gui/websocket.js"></script>
-//
-// Note that this also counts on variables USER_AUTHENTICATED and
-// WEBSOCKET_SERVER being set in the calling page.
 
 
-// Why are these separate globals?  The timestamps, in
-// particular should probably be captured by the objects that
-// handle these updates.  Oh yeah, one other thing, make the
-// functions that handle these updates be methods of objects.  :-)
-//var global_loggers = {};
-// var global_active_mode = 'off';
-// var global_last_cruise_timestamp = 0;
-// var global_last_cruise_mode_timestamp = 0;
-// var global_last_logger_status_timestamp = 0;
-
-//var odas = new Object;
-//odas.loggers = {};
-//odas.active_mode = 'off';
-//odas.last_cruise_timestamp = 0;
-//odas.last_cruise_mode_timestamp = 0;
-//odas.last_logger_status_timestamp = 0;
 
 //
 //  LoginButton 
@@ -91,26 +57,26 @@ var LoginButton = (function() {
         var payload_obj;
         var s = jwt.split('.');
         if (s.length < 2) {
-            throw new Error("JWT lacking dots: " + jwt);
+            throw new Error("Invalid token (lacking dots): " + jwt);
         }
         // We appear to have a payload.  Try it.
         var dec = atob(s[1]);
         try {
             payload_obj = JSON.parse(dec);
         } catch(error) {
-            throw new Error("JWT payload indeciferable: " + dec);
+            throw new Error("Invalid token (indeciferable): " + dec);
         }
         // Check for expired token
         if (!payload_obj.exp) { 
-            throw new Error("No expiration time in JWT.  Assuming invalid");
+            throw new Error("Invalid token (No expiration time)");
         }
         var exp = new Date(payload_obj.exp * 1000);
         if (exp < Date.now()) {
-            throw new Error("JWT auth token expired.  Need to log in.");
+            throw new Error("Login Expired.  Log in again");
         }
         // Check for a name in the payload
         if (!payload_obj.name) {
-            throw new Error("No name in JWT auth token.  Assuming invalid");
+            throw new Error("Invalid token (no name)");
         }
         return payload_obj.name;
     };
