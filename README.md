@@ -23,5 +23,17 @@ Once that has completed, you'll need to create a user for the SQLite web interfa
 
     cgi-bin/user_tool.py -add --user <user> --password <password>
 
-At this point, going to https://hostname should take you to the initial (still
+The configuration file ``sqlite_gui/js/openrvdas.js`` contains installation-specific
+file paths that you may need to customize to allow the GUI access to any cruise
+configurations that you want to load. The variables ``confdir`` and ``safedir`` near
+the bottom of the file specify which directories will be accessible for loading configurations.
+
+Prior to starting the SQLite GUI interface, you will need to shut down the existing
+Django-based GUI using supervisorctl:
+
+    supervisorctl stop openrvdas:logger_manager web:*
+    supervisorctl start sqlite:*
+
+Assuming the scripts all start up without complaint, at this point going to
+https://hostname should take you to the initial (still
 rudimentary) SQLite GUI page.

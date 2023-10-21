@@ -247,10 +247,17 @@ var CruiseDef = (function() {
         // we always get two messages at page startup.  This is a hack
         // to not report on the first one.
         if (odas.api) {
-            iziToast.success({
-                title: 'Loaded new configuration file',
-                message: config.filename,
-            });
+            if (config.filename) {
+                iziToast.success({
+                    title: 'Loaded new configuration file',
+                    message: config.filename,
+                });
+            } else {
+                iziToast.success({
+                    title: 'No configuration to load',
+                    message: 'no file',
+                });
+            }
         }
         // console.info('Loaded new configuration');
         odas.api = config;

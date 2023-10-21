@@ -239,11 +239,11 @@ function setup_supervisor {
             # Then copy into place
             sudo /bin/mv ${SUPERVISOR_TEMP_FILE} ${SUPERVISOR_TARGET_FILE}
 
-            # Move old openrvdas config out of the way
-            if [ -e "${OLD_SUPERVISOR_FILE}" ]; then
-                echo "Moving OpenRVDAS supervisor config file \"${OLD_SUPERVISOR_FILE}\" out of the way"
-                sudo /bin/mv -f ${OLD_SUPERVISOR_FILE} ${OLD_SUPERVISOR_FILE}.bak
-            fi
+            ## Move old openrvdas config out of the way
+            #if [ -e "${OLD_SUPERVISOR_FILE}" ]; then
+            #    echo "Moving OpenRVDAS supervisor config file \"${OLD_SUPERVISOR_FILE}\" out of the way"
+            #    sudo /bin/mv -f ${OLD_SUPERVISOR_FILE} ${OLD_SUPERVISOR_FILE}.bak
+            #fi
         fi
     else
         echo "Unable to set up supervisor for you."
@@ -323,7 +323,7 @@ function add_system_packages {
     # CentOS/RHEL
     elif [ $OS_TYPE == 'CentOS' ]; then
         echo "Installing CentOS packages"
-        yum install -y spawn-fcgi fcgiwrap
+        sudo yum install -y spawn-fcgi fcgiwrap
     # Ubuntu/Debian
     elif [ $OS_TYPE == 'Ubuntu' ]; then
         echo "Installing Ubuntu packages"
@@ -502,8 +502,8 @@ echo
 echo "############################################"
 echo "Reloading/restarting supervisord"
 sudo supervisorctl reload
-sleep 5
-supervisorctl start sqlite:*
+#sleep 5
+#supervisorctl start sqlite:*
 
 echo "Success! Please run "
 echo
