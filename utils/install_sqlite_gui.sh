@@ -323,7 +323,7 @@ function add_system_packages {
     # CentOS/RHEL
     elif [ $OS_TYPE == 'CentOS' ]; then
         echo "Installing CentOS packages"
-        yum install -y spawn-fcgi fcgiwrap
+        sudo yum install -y spawn-fcgi fcgiwrap
     # Ubuntu/Debian
     elif [ $OS_TYPE == 'Ubuntu' ]; then
         echo "Installing Ubuntu packages"
