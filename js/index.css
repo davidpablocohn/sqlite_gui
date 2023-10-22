@@ -7,18 +7,12 @@
  * ********************************************************************/
 
 .stderr_window {
-    height: 40px;
+    height: 3em;
     padding: 0px;
     overflow-y: auto;
     font-size: x-small;
     resize: vertical;
-    min-height: 30px;
-}
-
-/* I think this is not used */
-.tiny {
-    font-size:0.5em;
-    height: 8px;
+    min-height: 3em;
 }
 
 /* Styles for the context menu attached to the stderr windows */

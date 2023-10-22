@@ -319,11 +319,8 @@ var CruiseDef = (function() {
             tr.appendChild(config_td);
 
             var stderr_td = document.createElement('td');
-            var stderr_div = document.createElement('div');
+            var stderr_div = STDERR.create(logger_name);
 
-            stderr_div.setAttribute('id', logger_name + '_stderr');
-            stderr_div.className = 'stderr_window';
-            stderr_div.addEventListener('contextmenu', STDERR.ctxmenu);
             stderr_td.appendChild(stderr_div);
             tr.appendChild(stderr_td);
             table.appendChild(tr);

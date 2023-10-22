@@ -3,27 +3,20 @@
 // such as 'stderr:logger:s330', and appending them to a specified target div.
 //
 // Typical invocation will look like:
-//    <script src="/static/django_gui/stderr_log_utils.js"></script>
-//    <script src="/static/django_gui/websocket.js"></script>
+//    <script src="/js/stderr_log_utils.js"></script>
+//    <script src="/js/websocket.js"></script>
 //
 // Will take lines whose id matches 'stderr:logger:gyr1' and append them
-// to a div on the paged whose identity is 'gyr1_stderr'. Etc.
+// to a div on the page whose identity is 'gyr1_stderr'. Etc.
 
 ////////////////////////////
-// Process CDS data message (hopefully) containing log lines and add
-// to the div we've been passed.
 
 var STDERR = (function() {
     var loggers = {}
 
-    // FIXME:  Move creating stderr windows here.
-    // FIXME:  Keep track of errors for possible badges.
-
-    // target  - e.g. 's330_stderr
-    // lines  - should be [(timestamp, line), (timestamp, line),...],
-    //                  where 'line' is the log message to be recorded.
     var process = function(target, lines) {
-        // If nothing to log, go home
+        // target = target div
+        // lines = array of {timestamp, msg}
         if (!lines || lines.length == 0) {
             return;
         }
@@ -35,8 +28,7 @@ var STDERR = (function() {
             var [timestamp, log_line] = lines[i];
 
             // Clean up message and add to new_log_lines list
-            log_line = log_line.replace(/\n$/, '');
-            log_line = log_line.replace('\n', '<br />');
+            log_line = log_line.replace(/\n/, '<br />') + '<br />';
             new_log_lines += color_log_line(log_line, target);
         }
 
@@ -50,6 +42,8 @@ var STDERR = (function() {
             }
             target_div.innerHTML += new_log_lines;
             // scroll to bottom
+            // FIXME:  Should not do this if user is interacting with the element :-(
+            //         FIGURE OUT HOW TO SET A TIMEOUT OR SOMETHING
             target_div.scrollTop = target_div.scrollHeight;
             // FIFO the message, keeping an arbitrary 200
             // Otherwise we could have 10's of thousands.  Not cool.
@@ -73,6 +67,19 @@ var STDERR = (function() {
     var crit = {};
     var errs = {};
     var warn = {};
+    function stderr_scroll(evt) {
+        console.log(evt);
+    }
+
+    function create(logger) {
+        var div = document.createElement('div');
+        div.setAttribute('id', logger + "_stderr");
+        div.className = 'stderr_window border border-dark';
+        div.addEventListener('contextmenu', ctxmenu);
+        div.addEventListener('scroll', stderr_scroll);
+        return div;
+    }
+
     function color_log_line (message, target) {
         var color = 'text-body';
         if (message.includes (' 30 WARNING ') > 0) {
@@ -80,7 +87,7 @@ var STDERR = (function() {
             warn[target] = warn[target] + 1 || 1;
         }
         else if (message.includes (' 40 ERROR ') > 0) {
-            color = 'text-warning bg-dark';
+            color = 'text-danger font-weight-bold';
             errs[target] = errs[target] + 1 || 1;
         }
         else if (message.includes (' 50 CRITICAL ') > 0) {
@@ -99,30 +106,23 @@ var STDERR = (function() {
     var currentContextTarget = null;
     var ctxmenu = function(evt) {
         evt.preventDefault();
+        div = evt.currentTarget;
+        if (div.id.endsWith('_stderr')) {
+            currentContextTarget = div;
+        } else {
+            console.warn('Context menu on inappropriate div', div.id);
+            return false;
+        }
         ctx_menu_html.style.left = evt.pageX + 'px';
         ctx_menu_html.style.top = evt.pageY + 'px';
         ctx_menu_html.classList.add('menu-show');
-        // debug code
-        var div = evt.currentTarget;
-        currentContextTarget = div;
-        if (div.id.endsWith('_stderr')) {
-            id = div.id.slice(0, -7);
-            // console.info('Show context menu for', id);
-            
-        } else {
-            // console.warn('Context menu on inappropriate div', id);
-        }
     }
 
     var ctx_ack = function(evt) {
-        // console.log("ctx_ack called:");
-        // console.log("currentContextTarget =", currentContextTarget.id);
         ctx_menu_html.classList.remove('menu-show');
     }
 
     var ctx_clear = function(evt) {
-        // console.log("ctx_clear called:");
-        // console.log("currentContextTarget =", currentContextTarget.id);
         var d = currentContextTarget;
         while (d.lastElementChild) {
             d.removeChild(d.lastElementChild);
@@ -174,11 +174,9 @@ var STDERR = (function() {
     var ctx_menu_html = create_ctx_menu_html();
     document.body.appendChild(ctx_menu_html);
 
-    // FIXME:  Figure out how to refactor stuff so we do not
-    //         need to export the context menu functions.
     return {
         process: process,
-        ctxmenu: ctxmenu,
+        create: create,
     }
 
 })();
