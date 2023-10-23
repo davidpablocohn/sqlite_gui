@@ -28,7 +28,8 @@ var STDERR = (function() {
             var [timestamp, log_line] = lines[i];
 
             // Clean up message and add to new_log_lines list
-            log_line = log_line.replace(/\n/, '<br />') + '<br />';
+            log_line = log_line.replace(/\n$/, '');
+            log_line = log_line.replace(/\n/, '<br />') ;
             new_log_lines += color_log_line(log_line, target);
         }
 
@@ -44,7 +45,9 @@ var STDERR = (function() {
             // scroll to bottom
             // FIXME:  Should not do this if user is interacting with the element :-(
             //         FIGURE OUT HOW TO SET A TIMEOUT OR SOMETHING
-            target_div.scrollTop = target_div.scrollHeight;
+            if (! scrolls[target_div]) {
+                target_div.scrollTop = target_div.scrollHeight;
+            }
             // FIFO the message, keeping an arbitrary 200
             // Otherwise we could have 10's of thousands.  Not cool.
             var count = target_div.childElementCount;
@@ -67,8 +70,30 @@ var STDERR = (function() {
     var crit = {};
     var errs = {};
     var warn = {};
+
+    // If we abandon the screen for... let's say 2 minutes,
+    // reset scroll to bottom.
+    var scrolls = {};
+    // FIXME:  Make configurable
+    var scroll_timeout = 120000;
     function stderr_scroll(evt) {
-        console.log(evt);
+        evt.preventDefault();
+        var t = evt.target;
+        var sH = t.scrollHeight;
+        var sT = t.scrollTop;
+        if ((sH-sT) > 60) { // We've manually scrolled
+            id = t.id;
+            if (scrolls[id]) {
+                clearTimeout(scrolls[id]);
+            }
+            scrolls[id] = setTimeout(function() {reset_scroll(t)}, scroll_timeout);
+        }
+    }
+
+    function reset_scroll(target) {
+        console.info("Reset ", target.id, " scroll to bottom");
+        target.scrollTop = target.scrollHeight;
+        delete scrolls[target.id];
     }
 
     function create(logger) {
