@@ -172,13 +172,17 @@ function setup_supervisor {
     if [ $OS_TYPE == 'MacOS' ]; then
         SUPERVISOR_DIR=/usr/local/etc/supervisor.d
         SUPERVISOR_SOCKET=/usr/local/var/run/supervisor.sock
-        SUPERVISOR_SOURCE_FILE=${OPENRVDAS_ROOT}/sqlite_gui/supervisor/openrvdas_sqlite.ini.macos
+        SUPERVISOR_SOURCE_FILE=${OPENRVDAS_ROOT}/sqlite_gui/supervisor/openrvdas_sqlite.ini
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
-        OLD_SUPERVISOR_FILE=$SUPERVISOR_DIR/openrvdas.ini
+        SUPERVISOR_LM_SOURCE_FILE=${OPENRVDAS_ROOT}/sqlite_gui/supervisor/openrvdas_logger_manager_sqlite.ini
+        SUPERVISOR_LM_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_logger_manager_sqlite.ini
+        SUPERVISOR_OLD_DJANGO_FILE=$SUPERVISOR_DIR/openrvdas_django.ini
+        SUPERVISOR_OLD_LM_FILE=$SUPERVISOR_DIR/openrvdas_logger_manager.ini
 
-        FCGI_PATH=/usr/local/homebrew
+        FCGI_PATH=/usr/local
         FCGI_SOCKET=/var/run/fcgiwrap.sock
-        NGINX_PATH=/usr/local/homebrew/bin
+        SOCKET_GROUP=wheel
+        NGINX_PATH=/usr/local/bin
         NGINX_FILES=/usr/local/etc/nginx
 
     # CentOS/RHEL
@@ -190,10 +194,14 @@ function setup_supervisor {
         SUPERVISOR_SOCKET=/var/run/supervisor/supervisor.sock
         SUPERVISOR_SOURCE_FILE=${OPENRVDAS_ROOT}/sqlite_gui/supervisor/openrvdas_sqlite.ini
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.ini
-        OLD_SUPERVISOR_FILE=$SUPERVISOR_DIR/openrvdas.ini
+        SUPERVISOR_LM_SOURCE_FILE=${OPENRVDAS_ROOT}/sqlite_gui/supervisor/openrvdas_logger_manager_sqlite.ini
+        SUPERVISOR_LM_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_logger_manager_sqlite.ini
+        SUPERVISOR_OLD_DJANGO_FILE=$SUPERVISOR_DIR/openrvdas_django.ini
+        SUPERVISOR_OLD_LM_FILE=$SUPERVISOR_DIR/openrvdas_logger_manager.ini
 
         FCGI_PATH=/usr
         FCGI_SOCKET=/var/run/supervisor/fcgiwrap.sock
+        SOCKET_GROUP=$RVDAS_USER
         NGINX_PATH=/usr/sbin
         NGINX_FILES=/etc/nginx
 
@@ -208,10 +216,14 @@ function setup_supervisor {
         SUPERVISOR_SOCKET=/var/run/supervisor.sock
         SUPERVISOR_SOURCE_FILE=${OPENRVDAS_ROOT}/sqlite_gui/supervisor/openrvdas_sqlite.ini
         SUPERVISOR_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_sqlite.conf
-        OLD_SUPERVISOR_FILE=$SUPERVISOR_DIR/openrvdas.conf
+        SUPERVISOR_LM_SOURCE_FILE=${OPENRVDAS_ROOT}/sqlite_gui/supervisor/openrvdas_logger_manager_sqlite.ini
+        SUPERVISOR_LM_TARGET_FILE=$SUPERVISOR_DIR/openrvdas_logger_manager_sqlite.conf
+        SUPERVISOR_OLD_DJANGO_FILE=$SUPERVISOR_DIR/openrvdas_django.conf
+        SUPERVISOR_OLD_LM_FILE=$SUPERVISOR_DIR/openrvdas_logger_manager.conf
 
         FCGI_PATH=/usr
         FCGI_SOCKET=/var/run/fcgiwrap.sock
+        SOCKET_GROUP=$RVDAS_USER
         NGINX_PATH=/usr/sbin
         NGINX_FILES=/etc/nginx
     fi
@@ -232,6 +244,7 @@ function setup_supervisor {
             $SED_IE "s#OPENRVDAS_ROOT#${OPENRVDAS_ROOT}#g" ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#RVDAS_USER#${RVDAS_USER}#g" ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#SUPERVISOR_SOCKET#${SUPERVISOR_SOCKET}#g" ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#SOCKET_GROUP#${SOCKET_GROUP}#g" ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#FCGI_PATH#${FCGI_PATH}#g" ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#FCGI_SOCKET#${FCGI_SOCKET}#g" ${SUPERVISOR_TEMP_FILE}
             $SED_IE "s#NGINX_PATH#${NGINX_PATH}#g" ${SUPERVISOR_TEMP_FILE}
@@ -239,11 +252,29 @@ function setup_supervisor {
             # Then copy into place
             sudo /bin/mv ${SUPERVISOR_TEMP_FILE} ${SUPERVISOR_TARGET_FILE}
 
-            ## Move old openrvdas config out of the way
-            #if [ -e "${OLD_SUPERVISOR_FILE}" ]; then
-            #    echo "Moving OpenRVDAS supervisor config file \"${OLD_SUPERVISOR_FILE}\" out of the way"
-            #    sudo /bin/mv -f ${OLD_SUPERVISOR_FILE} ${OLD_SUPERVISOR_FILE}.bak
-            #fi
+            # Now do the same for the logger_manager file
+            cp ${SUPERVISOR_LM_SOURCE_FILE} ${SUPERVISOR_TEMP_FILE}
+
+            # First replace variables in the file with actual installation-specific values
+            $SED_IE "s#OPENRVDAS_ROOT#${OPENRVDAS_ROOT}#g" ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#RVDAS_USER#${RVDAS_USER}#g" ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#SUPERVISOR_SOCKET#${SUPERVISOR_SOCKET}#g" ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#FCGI_PATH#${FCGI_PATH}#g" ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#FCGI_SOCKET#${FCGI_SOCKET}#g" ${SUPERVISOR_TEMP_FILE}
+            $SED_IE "s#NGINX_PATH#${NGINX_PATH}#g" ${SUPERVISOR_TEMP_FILE}
+
+            # Then copy into place
+            sudo /bin/mv ${SUPERVISOR_TEMP_FILE} ${SUPERVISOR_LM_TARGET_FILE}
+
+            # Move openrvdas Django-based configs out of the way
+            if [ -e "${SUPERVISOR_OLD_DJANGO_FILE}" ]; then
+                echo "Moving OpenRVDAS supervisor config file \"${SUPERVISOR_OLD_DJANGO_FILE}\" to .bak"
+                sudo /bin/mv -f ${SUPERVISOR_OLD_DJANGO_FILE} ${SUPERVISOR_OLD_DJANGO_FILE}.bak
+            fi
+            if [ -e "${SUPERVISOR_OLD_LM_FILE}" ]; then
+                echo "Moving OpenRVDAS supervisor config file \"${SUPERVISOR_OLD_LM_FILE}\" to .bak"
+                sudo /bin/mv -f ${SUPERVISOR_OLD_LM_FILE} ${SUPERVISOR_OLD_LM_FILE}.bak
+            fi
         fi
     else
         echo "Unable to set up supervisor for you."
@@ -501,7 +532,9 @@ setup_nginx
 echo
 echo "############################################"
 echo "Reloading/restarting supervisord"
-sudo supervisorctl reload
+sudo supervisorctl reload || echo "
+***Unable to automatically restart supervisord! Please do this manually.***
+"
 #sleep 5
 #supervisorctl start sqlite:*
 
