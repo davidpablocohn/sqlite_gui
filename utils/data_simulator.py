@@ -191,7 +191,7 @@ def reader_thread(stop_event, key):
             break
         m = re.match(re_logged_data, line)
         if not m:
-            # log no recex match
+            # log no regex match
             continue
         isotime = m.group(1)
         data_to_send = m.group(2)
